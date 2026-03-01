@@ -132,8 +132,8 @@ public:
 	float m_fEffectiveRange;
 
 	unsigned char m_ucInputStateC;
-	unsigned char m_ucMapC;
-	unsigned char m_ucActionC;
+	unsigned char m_ucJoypadMapC;
+	unsigned char m_ucJoypadMapActionC;
 	unsigned char m_ucMenuActionC;
 
 	unsigned int** m_JoypadMap;
@@ -144,9 +144,6 @@ public:
 
 	CForceFeedback m_ForceFeedback;
 	CKeyboard m_Keyboard;
-
-	unsigned char m_ucJoypadMapC;
-	unsigned char m_ucJoypadMapActionC;
 
 	float m_fTickToSeconds;
 	float m_fRepeatDelaySecs;

@@ -56,8 +56,8 @@ void CInput::Initialise(int iInputStateC, unsigned char ucMapC, unsigned char uc
 		m_JoypadMap[i] = (unsigned int*)operator new[](ucActionC * sizeof(int));
 	}
 
-	m_ucMapC = ucMapC;
-	m_ucActionC = ucActionC;
+	m_ucJoypadMapC = ucMapC;
+	m_ucJoypadMapActionC = ucActionC;
 	m_ucMenuActionC = ucMenuActionC;
 	m_bJoypadMapArrayIsSetup = false;
 
@@ -282,7 +282,7 @@ unsigned char CInput::GetJoypadMapVal(int iPad)
 
 void CInput::SetJoypadStickAxisMap(int iPad, unsigned int uiFrom, unsigned int uiTo)
 {
-	float* pfTo{};
+	float* pfTo = nullptr;
 
 	switch (uiTo)
 	{
@@ -319,7 +319,7 @@ void CInput::SetJoypadStickAxisMap(int iPad, unsigned int uiFrom, unsigned int u
 
 void CInput::SetJoypadStickTriggerMap(int iPad, unsigned int uiFrom, unsigned int uiTo)
 {
-	unsigned char* pucTo{};
+	unsigned char* pucTo = nullptr;
 
 	switch (uiTo)
 	{
