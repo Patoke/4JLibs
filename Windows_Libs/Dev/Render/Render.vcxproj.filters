@@ -9,9 +9,20 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    <Filter Include="Header Files\zlib">
+      <UniqueIdentifier>{e5716c14-38f4-49f7-bf1a-916fbc7613a8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\libpng">
+      <UniqueIdentifier>{0681221a-1efa-43e4-b0f7-0b525172e486}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\libpng">
+      <UniqueIdentifier>{0629c87a-576d-4163-8c60-dad190ee97d0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\microprofile">
+      <UniqueIdentifier>{8be558c7-c6e6-4ef7-bfcb-83d29f079240}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\microprofile">
+      <UniqueIdentifier>{6cbd8b95-ff51-42d2-a66f-282d3a11c042}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -19,33 +30,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="4J_Render.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="libpng\png.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="libpng\pngconf.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="libpng\pngdebug.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="libpng\pnginfo.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="libpng\pngpriv.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="libpng\pngstruct.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="zlib\zlib.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="libpng\pnglibconf.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="zlib\zconf.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Renderer.h">
@@ -87,6 +71,45 @@
     <ClInclude Include="PS_ScreenSpace.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="zlib\zconf.h">
+      <Filter>Header Files\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="zlib\zlib.h">
+      <Filter>Header Files\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="libpng\png.h">
+      <Filter>Header Files\libpng</Filter>
+    </ClInclude>
+    <ClInclude Include="libpng\pngconf.h">
+      <Filter>Header Files\libpng</Filter>
+    </ClInclude>
+    <ClInclude Include="libpng\pngdebug.h">
+      <Filter>Header Files\libpng</Filter>
+    </ClInclude>
+    <ClInclude Include="libpng\pnginfo.h">
+      <Filter>Header Files\libpng</Filter>
+    </ClInclude>
+    <ClInclude Include="libpng\pnglibconf.h">
+      <Filter>Header Files\libpng</Filter>
+    </ClInclude>
+    <ClInclude Include="libpng\pngpriv.h">
+      <Filter>Header Files\libpng</Filter>
+    </ClInclude>
+    <ClInclude Include="libpng\pngstruct.h">
+      <Filter>Header Files\libpng</Filter>
+    </ClInclude>
+    <ClInclude Include="microprofile\microprofile.h">
+      <Filter>Header Files\microprofile</Filter>
+    </ClInclude>
+    <ClInclude Include="microprofile\microprofile_html.h">
+      <Filter>Header Files\microprofile</Filter>
+    </ClInclude>
+    <ClInclude Include="microprofile\microprofile_icons.h">
+      <Filter>Header Files\microprofile</Filter>
+    </ClInclude>
+    <ClInclude Include="Profiler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -114,52 +137,55 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="libpng\png.c">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\libpng</Filter>
     </ClCompile>
     <ClCompile Include="libpng\pngerror.c">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\libpng</Filter>
     </ClCompile>
     <ClCompile Include="libpng\pngget.c">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\libpng</Filter>
     </ClCompile>
     <ClCompile Include="libpng\pngmem.c">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\libpng</Filter>
     </ClCompile>
     <ClCompile Include="libpng\pngpread.c">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\libpng</Filter>
     </ClCompile>
     <ClCompile Include="libpng\pngread.c">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\libpng</Filter>
     </ClCompile>
     <ClCompile Include="libpng\pngrio.c">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\libpng</Filter>
     </ClCompile>
     <ClCompile Include="libpng\pngrtran.c">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\libpng</Filter>
     </ClCompile>
     <ClCompile Include="libpng\pngrutil.c">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\libpng</Filter>
     </ClCompile>
     <ClCompile Include="libpng\pngset.c">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\libpng</Filter>
     </ClCompile>
     <ClCompile Include="libpng\pngtest.c">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\libpng</Filter>
     </ClCompile>
     <ClCompile Include="libpng\pngtrans.c">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\libpng</Filter>
     </ClCompile>
     <ClCompile Include="libpng\pngwio.c">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\libpng</Filter>
     </ClCompile>
     <ClCompile Include="libpng\pngwrite.c">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\libpng</Filter>
     </ClCompile>
     <ClCompile Include="libpng\pngwtran.c">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\libpng</Filter>
     </ClCompile>
     <ClCompile Include="libpng\pngwutil.c">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\libpng</Filter>
+    </ClCompile>
+    <ClCompile Include="microprofile\microprofile.cpp">
+      <Filter>Source Files\microprofile</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

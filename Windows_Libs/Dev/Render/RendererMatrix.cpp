@@ -1,18 +1,18 @@
-#pragma once
+#include "stdafx.h"
 #include "Renderer.h"
 
 #include <cstring>
 
 const float *Renderer::MatrixGet(int type)
 {
-    Context &c = this->getContext();
+    Context &c = getContext();
     const int depth = c.stackPos[type];
     return reinterpret_cast<const float *>(&c.matrixStacks[type][depth]);
 }
 
 void Renderer::MatrixMode(int type)
 {
-    Context &c = this->getContext();
+    Context &c = getContext();
     assert(type >= 0);
     assert(type < STACK_TYPES);
     c.stackType = type;
@@ -22,25 +22,25 @@ void Renderer::MatrixMult(float *mat)
 {
     DirectX::XMMATRIX matrix;
     std::memcpy(&matrix, mat, sizeof(matrix));
-    this->MultWithStack(matrix);
+    MultWithStack(matrix);
 }
 
 void Renderer::MatrixOrthogonal(float left, float right, float bottom, float top, float zNear, float zFar)
 {
     const DirectX::XMMATRIX matrix = DirectX::XMMatrixOrthographicOffCenterRH(left, right, bottom, top, zNear, zFar);
-    this->MultWithStack(matrix);
+    MultWithStack(matrix);
 }
 
 void Renderer::MatrixPerspective(float fovy, float aspect, float zNear, float zFar)
 {
     const float fovRadians = fovy * (3.14159274f / 180.0f);
     const DirectX::XMMATRIX matrix = DirectX::XMMatrixPerspectiveFovRH(fovRadians, aspect, zNear, zFar);
-    this->MultWithStack(matrix);
+    MultWithStack(matrix);
 }
 
 void Renderer::MatrixPop()
 {
-    Context &c = this->getContext();
+    Context &c = getContext();
 
     assert(c.stackPos[c.stackType] > 0);
 
@@ -51,7 +51,7 @@ void Renderer::MatrixPop()
 
 void Renderer::MatrixPush()
 {
-    Context &c = this->getContext();
+    Context &c = getContext();
     
     assert(c.stackPos[c.stackType] < (STACK_SIZE - 1));
 
@@ -65,18 +65,18 @@ void Renderer::MatrixRotate(float angle, float x, float y, float z)
 {
     const DirectX::XMVECTOR axis = DirectX::XMVectorSet(x, y, z, 0.0f);
     const DirectX::XMMATRIX matrix = DirectX::XMMatrixRotationAxis(axis, angle);
-    this->MultWithStack(matrix);
+    MultWithStack(matrix);
 }
 
 void Renderer::MatrixScale(float x, float y, float z)
 {
     const DirectX::XMMATRIX matrix = DirectX::XMMatrixScaling(x, y, z);
-    this->MultWithStack(matrix);
+    MultWithStack(matrix);
 }
 
 void Renderer::MatrixSetIdentity()
 {
-    Context &c = this->getContext();
+    Context &c = getContext();
     const int mode = c.stackType;
     const int depth = c.stackPos[mode];
     c.matrixStacks[mode][depth] = DirectX::XMMatrixIdentity();
@@ -86,12 +86,12 @@ void Renderer::MatrixSetIdentity()
 void Renderer::MatrixTranslate(float x, float y, float z)
 {
     const DirectX::XMMATRIX matrix = DirectX::XMMatrixTranslation(x, y, z);
-    this->MultWithStack(matrix);
+    MultWithStack(matrix);
 }
 
 void Renderer::MultWithStack(DirectX::XMMATRIX matrix)
 {
-    Context &c = this->getContext();
+    Context &c = getContext();
     const int mode = c.stackType;
     const int depth = c.stackPos[mode];
     DirectX::XMMATRIX &current = c.matrixStacks[mode][depth];
@@ -101,7 +101,7 @@ void Renderer::MultWithStack(DirectX::XMMATRIX matrix)
 
 void Renderer::Set_matrixDirty()
 {
-    Context &c = this->getContext();
+    Context &c = getContext();
     const DirectX::XMMATRIX identity = DirectX::XMMatrixIdentity();
 
     c.matrixStacks[MATRIX_MODE_MODELVIEW][0] = identity;
@@ -114,6 +114,6 @@ void Renderer::Set_matrixDirty()
     c.matrixDirty[MATRIX_MODE_MODELVIEW_TEXTURE] = true;
     c.matrixDirty[MATRIX_MODE_MODELVIEW_CBUFF] = true;
 
-    activeVertexType = 0xFFFFFFFFu;
-    activePixelType = 0xFFFFFFFFu;
+    activeVertexType = -1;
+    activePixelType = -1;
 }

@@ -1,17 +1,19 @@
-#pragma once
+#include "stdafx.h"
 #include "Renderer.h"
 
-#include <algorithm>
-#include <cstddef>
 #include <cstdint>
-#include <cstdlib>
 #include <cstring>
 #include <new>
 
 Renderer::CommandBuffer::CommandBuffer(bool full)
-    : m_vertexBuffer(nullptr), m_vertexData(nullptr), m_vertexDataLength(0), m_commands(), m_allocated(0x1000), isActive(full ? 1 : 0)
+    : m_vertexBuffer(NULL)
+    , m_vertexData(NULL)
+    , m_vertexDataLength(0)
+    , m_commands()
+    , m_allocated(0x1000)
+    , isActive(full ? 1 : 0)
 {
-    m_vertexData = std::malloc(m_allocated);
+    m_vertexData = malloc(m_allocated);
     EnterCriticalSection(&Renderer::totalAllocCS);
     Renderer::totalAlloc += static_cast<int>(m_allocated);
     LeaveCriticalSection(&Renderer::totalAllocCS);
@@ -20,11 +22,9 @@ Renderer::CommandBuffer::CommandBuffer(bool full)
 Renderer::CommandBuffer::~CommandBuffer()
 {
     if (m_vertexBuffer)
-    {
         m_vertexBuffer->Release();
-    }
 
-    std::free(m_vertexData);
+    free(m_vertexData);
 
     EnterCriticalSection(&Renderer::totalAllocCS);
     Renderer::totalAlloc -= static_cast<int>(m_allocated);
@@ -38,7 +38,7 @@ void Renderer::CommandBuffer::EndRecording(ID3D11Device *device)
     if (m_vertexDataLength != 0)
     {
         D3D11_BUFFER_DESC desc = {};
-        desc.ByteWidth = m_vertexDataLength;
+        desc.ByteWidth = static_cast<UINT>(m_vertexDataLength);
         desc.Usage = D3D11_USAGE_IMMUTABLE;
         desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
@@ -47,8 +47,8 @@ void Renderer::CommandBuffer::EndRecording(ID3D11Device *device)
         device->CreateBuffer(&desc, &data, &m_vertexBuffer);
     }
 
-    std::free(m_vertexData);
-    m_vertexData = nullptr;
+    free(m_vertexData);
+    m_vertexData = NULL;
 }
 
 std::uint64_t Renderer::CommandBuffer::GetAllocated()
@@ -65,15 +65,17 @@ void Renderer::CommandBuffer::AddMatrix(const float *matrix)
 {
     Command command = {};
     command.m_command_type = COMMAND_ADD_MATRIX;
-    std::memcpy(command.add_matrix.m_matrix, matrix, sizeof(command.add_matrix.m_matrix));
+    memcpy(command.add_matrix.m_matrix, matrix, sizeof(command.add_matrix.m_matrix));
     m_commands.push_back(command);
 }
 
 void Renderer::CommandBuffer::AddVertices(unsigned int stride, unsigned int count, void *dataIn, Renderer::Context &c)
 {
+    PROFILER_SCOPE("Renderer::CommandBuffer::AddVertices", "AddVertices", MP_ORANGE)
+
     if (c.matrixDirty[MATRIX_MODE_MODELVIEW_CBUFF])
     {
-        this->AddMatrix(InternalRenderManager.MatrixGet(MATRIX_MODE_MODELVIEW_CBUFF));
+        AddMatrix(InternalRenderManager.MatrixGet(MATRIX_MODE_MODELVIEW_CBUFF));
         c.matrixDirty[MATRIX_MODE_MODELVIEW_CBUFF] = false;
     }
 
@@ -92,7 +94,7 @@ void Renderer::CommandBuffer::AddVertices(unsigned int stride, unsigned int coun
         Renderer::totalAlloc -= static_cast<int>(m_allocated);
         LeaveCriticalSection(&Renderer::totalAllocCS);
 
-        m_allocated = ((m_vertexDataLength + (0x1000u - 1u)) & ~(0x1000u - 1u));
+        m_allocated = ((m_vertexDataLength + (0x1000 - 1)) & ~(0x1000 - 1));
         m_vertexData = std::realloc(m_vertexData, m_allocated);
 
         EnterCriticalSection(&Renderer::totalAllocCS);
@@ -101,7 +103,7 @@ void Renderer::CommandBuffer::AddVertices(unsigned int stride, unsigned int coun
     }
 
     const std::size_t byteCount = std::size_t(stride) * std::size_t(count);
-    std::memcpy(static_cast<std::uint8_t *>(m_vertexData) + vertexOffset, dataIn, byteCount);
+    memcpy(static_cast<std::uint8_t *>(m_vertexData) + vertexOffset, dataIn, byteCount);
     m_commands.push_back(command);
 }
 
@@ -243,36 +245,39 @@ void Renderer::CommandBuffer::SetFaceCull(bool enable)
 
 void Renderer::CommandBuffer::Render(C4JRender::eVertexType vType, Renderer::Context &c, int primitiveType)
 {
+    PROFILER_SCOPE("Renderer::CommandBuffer::Render", "Render", MP_ORANGE)
+
     if (!m_vertexBuffer)
-    {
         return;
-    }
 
     int drawVertexType = vType;
     int shaderVertexType = drawVertexType;
     bool matrixOverride = false;
 
-    for (std::vector<Command>::const_iterator it = m_commands.begin(); it != m_commands.end(); ++it)
+    for (const Command &command : m_commands)
     {
-        const Command &command = *it;
+        PROFILER_SCOPE("Renderer::CommandBuffer::Render", "ProcessCommand", MP_ORANGE)
+
         switch (command.m_command_type)
         {
         case COMMAND_ADD_MATRIX:
         {
             if (drawVertexType == C4JRender::VERTEX_TYPE_COMPRESSED)
             {
-                const float row[4] = {command.add_matrix.m_matrix[12], command.add_matrix.m_matrix[13], command.add_matrix.m_matrix[14],
-                                      command.add_matrix.m_matrix[15]};
+                const float row[4] = {
+                    command.add_matrix.m_matrix[12], command.add_matrix.m_matrix[13],
+                    command.add_matrix.m_matrix[14], command.add_matrix.m_matrix[15]
+                };
                 D3D11_MAPPED_SUBRESOURCE mappedAux0 = {};
                 c.m_pDeviceContext->Map(c.m_compressedTranslationBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedAux0);
-                std::memcpy(mappedAux0.pData, row, sizeof(row));
+                memcpy(mappedAux0.pData, row, sizeof(row));
                 c.m_pDeviceContext->Unmap(c.m_compressedTranslationBuffer, 0);
             }
             else
             {
                 D3D11_MAPPED_SUBRESOURCE mappedMatrix1 = {};
                 c.m_pDeviceContext->Map(c.m_localTransformMatrix, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMatrix1);
-                std::memcpy(mappedMatrix1.pData, command.add_matrix.m_matrix, sizeof(command.add_matrix.m_matrix));
+                memcpy(mappedMatrix1.pData, command.add_matrix.m_matrix, sizeof(command.add_matrix.m_matrix));
                 c.m_pDeviceContext->Unmap(c.m_localTransformMatrix, 0);
                 matrixOverride = true;
             }
@@ -300,7 +305,7 @@ void Renderer::CommandBuffer::Render(C4JRender::eVertexType vType, Renderer::Con
 
                 if (static_cast<DWORD>(drawVertexType) != InternalRenderManager.activeVertexType)
                 {
-                    c.m_pDeviceContext->VSSetShader(InternalRenderManager.vertexShaderTable[shaderVertexType], nullptr, 0);
+                    c.m_pDeviceContext->VSSetShader(InternalRenderManager.vertexShaderTable[shaderVertexType], NULL, 0);
                     c.m_pDeviceContext->IASetInputLayout(InternalRenderManager.inputLayoutTable[shaderVertexType]);
                     InternalRenderManager.activeVertexType = drawVertexType;
                 }
@@ -310,12 +315,12 @@ void Renderer::CommandBuffer::Render(C4JRender::eVertexType vType, Renderer::Con
             bool drawIndexed = false;
             if (primitiveType == C4JRender::PRIMITIVE_TYPE_QUAD_LIST)
             {
-                drawCount = (drawCount * 6u) / 4u;
+                drawCount = (drawCount * 6) / 4;
                 drawIndexed = true;
             }
             else if (primitiveType == C4JRender::PRIMITIVE_TYPE_TRIANGLE_FAN)
             {
-                drawCount = (drawCount - 2u) * 3u;
+                drawCount = (drawCount - 2) * 3;
                 drawIndexed = true;
             }
 
@@ -325,13 +330,9 @@ void Renderer::CommandBuffer::Render(C4JRender::eVertexType vType, Renderer::Con
             c.m_pDeviceContext->IASetVertexBuffers(0, 1, &buffer, &stride, &offset);
 
             if (drawIndexed)
-            {
                 c.m_pDeviceContext->DrawIndexed(drawCount, 0, 0);
-            }
             else
-            {
                 c.m_pDeviceContext->Draw(drawCount, 0);
-            }
             break;
         }
         case COMMAND_BIND_TEXTURE:
@@ -346,7 +347,7 @@ void Renderer::CommandBuffer::Render(C4JRender::eVertexType vType, Renderer::Con
         {
             D3D11_MAPPED_SUBRESOURCE mappedColour = {};
             c.m_pDeviceContext->Map(c.m_tintColorBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedColour);
-            std::memcpy(mappedColour.pData, command.set_color.m_color, sizeof(command.set_color.m_color));
+            memcpy(mappedColour.pData, command.set_color.m_color, sizeof(command.set_color.m_color));
             c.m_pDeviceContext->Unmap(c.m_tintColorBuffer, 0);
             break;
         }
@@ -358,21 +359,21 @@ void Renderer::CommandBuffer::Render(C4JRender::eVertexType vType, Renderer::Con
         }
         case COMMAND_SET_DEPTH_MASK:
         {
-            c.depthWriteEnabled = command.set_depth_mask.m_enable ? 1 : 0;
+            c.depthWriteEnabled = command.set_depth_mask.m_enable;
             c.depthStencilDesc.DepthWriteMask = command.set_depth_mask.m_enable ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO;
             c.m_pDeviceContext->OMSetDepthStencilState(InternalRenderManager.GetManagedDepthStencilState(), 0);
             break;
         }
         case COMMAND_SET_DEPTH_TEST:
         {
-            c.depthTestEnabled = command.set_depth_test.m_enable ? 1 : 0;
-            c.depthStencilDesc.DepthEnable = command.set_depth_test.m_enable ? TRUE : FALSE;
+            c.depthTestEnabled = command.set_depth_test.m_enable;
+            c.depthStencilDesc.DepthEnable = command.set_depth_test.m_enable;
             c.m_pDeviceContext->OMSetDepthStencilState(InternalRenderManager.GetManagedDepthStencilState(), 0);
             break;
         }
         case COMMAND_SET_LIGHTING_ENABLE:
         {
-            c.lightingEnabled = command.set_lighting_enable.m_enable ? 1 : 0;
+            c.lightingEnabled = command.set_lighting_enable.m_enable;
             break;
         }
         case COMMAND_SET_LIGHT_ENABLE:
@@ -380,8 +381,8 @@ void Renderer::CommandBuffer::Render(C4JRender::eVertexType vType, Renderer::Con
             const int light = command.set_light_enable.m_light_index;
             if (light >= 0 && light < 2)
             {
-                c.lightEnabled[light] = command.set_light_enable.m_enable ? 1 : 0;
-                c.lightingDirty = 1;
+                c.lightEnabled[light] = command.set_light_enable.m_enable;
+                c.lightingDirty = true;
             }
             break;
         }
@@ -394,7 +395,7 @@ void Renderer::CommandBuffer::Render(C4JRender::eVertexType vType, Renderer::Con
                 c.lightDirection[light].y = command.set_light_direction.m_direction[1];
                 c.lightDirection[light].z = command.set_light_direction.m_direction[2];
                 c.lightDirection[light].w = command.set_light_direction.m_direction[3];
-                c.lightingDirty = 1;
+                c.lightingDirty = true;
             }
             break;
         }
@@ -407,7 +408,7 @@ void Renderer::CommandBuffer::Render(C4JRender::eVertexType vType, Renderer::Con
                 c.lightColour[light].y = command.set_light_colour.m_color[1];
                 c.lightColour[light].z = command.set_light_colour.m_color[2];
                 c.lightColour[light].w = 1.0f;
-                c.lightingDirty = 1;
+                c.lightingDirty = true;
             }
             break;
         }
@@ -417,36 +418,36 @@ void Renderer::CommandBuffer::Render(C4JRender::eVertexType vType, Renderer::Con
             c.lightAmbientColour.y = command.set_light_ambient_colour.m_color[1];
             c.lightAmbientColour.z = command.set_light_ambient_colour.m_color[2];
             c.lightAmbientColour.w = 1.0f;
-            c.lightingDirty = 1;
+            c.lightingDirty = true;
             break;
         }
         case COMMAND_SET_BLEND_ENABLE:
         {
-            c.blendDesc.RenderTarget[0].BlendEnable = command.set_blend_enable.m_enable ? TRUE : FALSE;
+            c.blendDesc.RenderTarget[0].BlendEnable = command.set_blend_enable.m_enable;
             break;
         }
         case COMMAND_SET_BLEND_FUNC:
         {
             c.blendDesc.RenderTarget[0].SrcBlend = static_cast<D3D11_BLEND>(command.set_blend_func.m_src);
             c.blendDesc.RenderTarget[0].DestBlend = static_cast<D3D11_BLEND>(command.set_blend_func.m_dst);
-            c.m_pDeviceContext->OMSetBlendState(InternalRenderManager.GetManagedBlendState(), c.blendFactor, 0xFFFFFFFFu);
+            c.m_pDeviceContext->OMSetBlendState(InternalRenderManager.GetManagedBlendState(), c.blendFactor, 0xFFFFFFFF);
             break;
         }
         case COMMAND_SET_BLEND_FACTOR:
         {
             const unsigned int factor = command.set_blend_factor.m_blend_factor;
-            c.blendFactor[0] = float((factor >> 0) & 0xFFu) / 255.0f;
-            c.blendFactor[1] = float((factor >> 8) & 0xFFu) / 255.0f;
-            c.blendFactor[2] = float((factor >> 16) & 0xFFu) / 255.0f;
-            c.blendFactor[3] = float((factor >> 24) & 0xFFu) / 255.0f;
-            c.m_pDeviceContext->OMSetBlendState(InternalRenderManager.GetManagedBlendState(), c.blendFactor, 0xFFFFFFFFu);
+            c.blendFactor[0] = float((factor >> 0) & 0xFF) / 255.0f;
+            c.blendFactor[1] = float((factor >> 8) & 0xFF) / 255.0f;
+            c.blendFactor[2] = float((factor >> 16) & 0xFF) / 255.0f;
+            c.blendFactor[3] = float((factor >> 24) & 0xFF) / 255.0f;
+            c.m_pDeviceContext->OMSetBlendState(InternalRenderManager.GetManagedBlendState(), c.blendFactor, 0xFFFFFFFF);
             break;
         }
         case COMMAND_SET_FACE_CULL:
         {
             c.rasterizerDesc.CullMode = command.set_face_cull.m_enable ? D3D11_CULL_BACK : D3D11_CULL_NONE;
             c.m_pDeviceContext->RSSetState(InternalRenderManager.GetManagedRasterizerState());
-            c.faceCullEnabled = command.set_face_cull.m_enable ? 1 : 0;
+            c.faceCullEnabled = command.set_face_cull.m_enable;
             break;
         }
         default:
@@ -459,7 +460,7 @@ void Renderer::CommandBuffer::Render(C4JRender::eVertexType vType, Renderer::Con
         const DirectX::XMMATRIX identity = DirectX::XMMatrixIdentity();
         D3D11_MAPPED_SUBRESOURCE mappedIdentity = {};
         c.m_pDeviceContext->Map(c.m_localTransformMatrix, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedIdentity);
-        std::memcpy(mappedIdentity.pData, &identity, sizeof(identity));
+        memcpy(mappedIdentity.pData, &identity, sizeof(identity));
         c.m_pDeviceContext->Unmap(c.m_localTransformMatrix, 0);
     }
 }
@@ -472,7 +473,7 @@ bool Renderer::CBuffCall(int index, bool full)
     const int commandIndex = m_commandHandleToIndex[index];
     if (commandIndex >= 0)
     {
-        Renderer::Context &c = this->getContext();
+        Renderer::Context &c = getContext();
         const std::uint8_t vertexType = m_commandVertexTypes[commandIndex];
         const std::uint8_t primitiveType = m_commandPrimitiveTypes[commandIndex];
 
@@ -482,7 +483,7 @@ bool Renderer::CBuffCall(int index, bool full)
             {
                 D3D11_MAPPED_SUBRESOURCE mappedMatrix0 = {};
                 c.m_pDeviceContext->Map(c.m_modelViewMatrix, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMatrix0);
-                std::memcpy(mappedMatrix0.pData, this->MatrixGet(MATRIX_MODE_MODELVIEW), sizeof(DirectX::XMMATRIX));
+                memcpy(mappedMatrix0.pData, MatrixGet(MATRIX_MODE_MODELVIEW), sizeof(DirectX::XMMATRIX));
                 c.m_pDeviceContext->Unmap(c.m_modelViewMatrix, 0);
                 c.matrixDirty[MATRIX_MODE_MODELVIEW] = false;
             }
@@ -491,7 +492,7 @@ bool Renderer::CBuffCall(int index, bool full)
             {
                 D3D11_MAPPED_SUBRESOURCE mappedMatrix2 = {};
                 c.m_pDeviceContext->Map(c.m_projectionMatrix, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMatrix2);
-                std::memcpy(mappedMatrix2.pData, this->MatrixGet(MATRIX_MODE_MODELVIEW_PROJECTION), sizeof(DirectX::XMMATRIX));
+                memcpy(mappedMatrix2.pData, MatrixGet(MATRIX_MODE_MODELVIEW_PROJECTION), sizeof(DirectX::XMMATRIX));
                 c.m_pDeviceContext->Unmap(c.m_projectionMatrix, 0);
                 c.matrixDirty[MATRIX_MODE_MODELVIEW_PROJECTION] = false;
             }
@@ -500,19 +501,19 @@ bool Renderer::CBuffCall(int index, bool full)
             {
                 D3D11_MAPPED_SUBRESOURCE mappedMatrix3 = {};
                 c.m_pDeviceContext->Map(c.m_textureMatrix, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMatrix3);
-                std::memcpy(mappedMatrix3.pData, this->MatrixGet(MATRIX_MODE_MODELVIEW_TEXTURE), sizeof(DirectX::XMMATRIX));
+                memcpy(mappedMatrix3.pData, MatrixGet(MATRIX_MODE_MODELVIEW_TEXTURE), sizeof(DirectX::XMMATRIX));
                 c.m_pDeviceContext->Unmap(c.m_textureMatrix, 0);
                 c.matrixDirty[MATRIX_MODE_MODELVIEW_TEXTURE] = false;
             }
 
-            this->UpdateFogState();
-            this->UpdateLightingState();
-            this->UpdateViewportState();
-            this->UpdateTexGenState();
+            UpdateFogState();
+            UpdateLightingState();
+            UpdateViewportState();
+            UpdateTexGenState();
 
             if (vertexType != activeVertexType)
             {
-                c.m_pDeviceContext->VSSetShader(vertexShaderTable[vertexType], nullptr, 0);
+                c.m_pDeviceContext->VSSetShader(vertexShaderTable[vertexType], NULL, 0);
                 c.m_pDeviceContext->IASetInputLayout(inputLayoutTable[vertexType]);
                 activeVertexType = vertexType;
             }
@@ -523,28 +524,24 @@ bool Renderer::CBuffCall(int index, bool full)
                 const float forcedLod[4] = {static_cast<float>(static_cast<int>(c.forcedLOD)), 0.0f, 0.0f, 0.0f};
                 D3D11_MAPPED_SUBRESOURCE mappedAux4 = {};
                 c.m_pDeviceContext->Map(c.m_forcedLODBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedAux4);
-                std::memcpy(mappedAux4.pData, forcedLod, sizeof(forcedLod));
+                memcpy(mappedAux4.pData, forcedLod, sizeof(forcedLod));
                 c.m_pDeviceContext->Unmap(c.m_forcedLODBuffer, 0);
                 pixelType = C4JRender::PIXEL_SHADER_TYPE_FORCELOD;
             }
 
             if (static_cast<DWORD>(pixelType) != activePixelType)
             {
-                c.m_pDeviceContext->PSSetShader(pixelShaderTable[pixelType], nullptr, 0);
+                c.m_pDeviceContext->PSSetShader(pixelShaderTable[pixelType], NULL, 0);
                 activePixelType = pixelType;
             }
 
-            c.m_pDeviceContext->IASetPrimitiveTopology(m_Topologies[primitiveType]);
+            c.m_pDeviceContext->IASetPrimitiveTopology(g_topologies[primitiveType]);
 
-            ID3D11Buffer *indexBuffer = nullptr;
+            ID3D11Buffer *indexBuffer = NULL;
             if (primitiveType == C4JRender::PRIMITIVE_TYPE_QUAD_LIST)
-            {
                 indexBuffer = quadIndexBuffer;
-            }
             else if (primitiveType == C4JRender::PRIMITIVE_TYPE_TRIANGLE_FAN)
-            {
                 indexBuffer = fanIndexBuffer;
-            }
 
             c.m_pDeviceContext->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R16_UINT, 0);
         }
@@ -553,7 +550,7 @@ bool Renderer::CBuffCall(int index, bool full)
 
         if (full)
         {
-            this->MultWithStack(m_commandMatrices[commandIndex]);
+            MultWithStack(m_commandMatrices[commandIndex]);
             c.matrixStacks[MATRIX_MODE_MODELVIEW_CBUFF][0] = DirectX::XMMatrixIdentity();
             c.matrixDirty[MATRIX_MODE_MODELVIEW_CBUFF] = true;
         }
@@ -573,7 +570,7 @@ void Renderer::CBuffClear(int index)
     const int internalIndex = externalToInternal[index];
     if (internalIndex >= 0)
     {
-        this->DeleteInternalBuffer(internalIndex);
+        DeleteInternalBuffer(internalIndex);
         externalToInternal[index] = static_cast<std::int16_t>(-2);
     }
 
@@ -600,9 +597,7 @@ int Renderer::CBuffCreate(int count)
             }
 
             if (cursor >= end)
-            {
                 break;
-            }
 
             ++first;
             ++probe;
@@ -618,14 +613,10 @@ int Renderer::CBuffCreate(int count)
         {
             const int allocationEnd = first + count;
             for (int i = first; i < allocationEnd; ++i)
-            {
                 m_commandHandleToIndex[i] = static_cast<std::int16_t>(-2);
-            }
 
             if (reservedRendererByte1)
-            {
                 reservedRendererDword1 = allocationEnd;
-            }
         }
     }
     else
@@ -639,28 +630,22 @@ int Renderer::CBuffCreate(int count)
 
 void Renderer::CBuffDeferredModeEnd()
 {
-    Renderer::Context &c = this->getContext();
+    Renderer::Context &c = getContext();
     if (!c.deferredModeEnabled)
-    {
         return;
-    }
 
     EnterCriticalSection(&rtl_critical_section100);
-    c.deferredModeEnabled = 0;
+    c.deferredModeEnabled = false;
 
     for (std::vector<Renderer::DeferredCBuff>::const_iterator it = c.deferredBuffers.begin(); it != c.deferredBuffers.end(); ++it)
     {
         const Renderer::DeferredCBuff &deferred = *it;
         const int existingIndex = m_commandHandleToIndex[deferred.m_vertex_index];
         if (existingIndex >= 0)
-        {
-            this->DeleteInternalBuffer(existingIndex);
-        }
+            DeleteInternalBuffer(existingIndex);
 
-        if (static_cast<int>(reservedRendererDword2 + reservedRendererDword3 + 10u) > MAX_COMMAND_BUFFERS)
-        {
+        if (static_cast<int>(reservedRendererDword2 + reservedRendererDword3 + 10) > MAX_COMMAND_BUFFERS)
             DebugBreak();
-        }
 
         const int internalSlot = reservedRendererDword2;
         ++reservedRendererDword2;
@@ -679,7 +664,7 @@ void Renderer::CBuffDeferredModeEnd()
 
 void Renderer::CBuffDeferredModeStart()
 {
-    this->getContext().deferredModeEnabled = 1;
+    getContext().deferredModeEnabled = true;
 }
 
 void Renderer::CBuffDelete(int first, int count)
@@ -691,9 +676,7 @@ void Renderer::CBuffDelete(int first, int count)
     {
         const int internalIndex = m_commandHandleToIndex[i];
         if (internalIndex >= 0)
-        {
-            this->DeleteInternalBuffer(internalIndex);
-        }
+            DeleteInternalBuffer(internalIndex);
 
         m_commandHandleToIndex[i] = static_cast<std::int16_t>(-1);
     }
@@ -703,7 +686,7 @@ void Renderer::CBuffDelete(int first, int count)
 
 void Renderer::CBuffEnd()
 {
-    Renderer::Context &c = this->getContext();
+    Renderer::Context &c = getContext();
 
     assert(c.stackType == MATRIX_MODE_MODELVIEW_CBUFF);
     assert(c.stackPos[MATRIX_MODE_MODELVIEW_CBUFF] == 0);
@@ -724,14 +707,10 @@ void Renderer::CBuffEnd()
     {
         const int existingIndex = m_commandHandleToIndex[c.recordingBufferIndex];
         if (existingIndex >= 0)
-        {
-            this->DeleteInternalBuffer(existingIndex);
-        }
+            DeleteInternalBuffer(existingIndex);
 
-        if (static_cast<int>(reservedRendererDword2 + reservedRendererDword3 + 10u) > MAX_COMMAND_BUFFERS)
-        {
+        if (static_cast<int>(reservedRendererDword2 + reservedRendererDword3 + 10) > MAX_COMMAND_BUFFERS)
             DebugBreak();
-        }
 
         const int internalSlot = reservedRendererDword2;
         ++reservedRendererDword2;
@@ -746,7 +725,7 @@ void Renderer::CBuffEnd()
 
     c.stackType = MATRIX_MODE_MODELVIEW;
     c.commandBuffer->EndRecording(m_pDevice);
-    c.commandBuffer = nullptr;
+    c.commandBuffer = NULL;
 
     LeaveCriticalSection(&rtl_critical_section100);
 }
@@ -759,24 +738,20 @@ void Renderer::CBuffLockStaticCreations()
 int Renderer::CBuffSize(int index)
 {
     if (index == -1)
-    {
         return totalAlloc < 0 ? 0 : totalAlloc;
-    }
 
     unsigned int size = 0;
     EnterCriticalSection(&rtl_critical_section100);
     const int commandIndex = m_commandHandleToIndex[index];
     if (commandIndex >= 0)
-    {
-        size = m_commandBuffers[commandIndex]->GetAllocated();
-    }
+        size = static_cast<unsigned int>(m_commandBuffers[commandIndex]->GetAllocated());
     LeaveCriticalSection(&rtl_critical_section100);
     return size;
 }
 
 void Renderer::CBuffStart(int index, bool full)
 {
-    Renderer::Context &c = this->getContext();
+    Renderer::Context &c = getContext();
     c.commandBuffer = new (std::nothrow) Renderer::CommandBuffer(full);
     c.recordingBufferIndex = index;
 
@@ -797,10 +772,8 @@ void Renderer::CBuffTick()
     {
         Renderer::CommandBuffer *buffer = m_commandBuffers[i];
         if (buffer)
-        {
             delete buffer;
-        }
-        m_commandBuffers[i] = nullptr;
+        m_commandBuffers[i] = NULL;
     }
 
     reservedRendererDword3 = 0;
