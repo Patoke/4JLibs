@@ -29,6 +29,4 @@ You will need to add every file into their respective project and add the ``extr
 
 ## What is implemented?
 
-So far, 4J_Input, 4J_Storage and 4J_Profile can link against the main project just fine, 4J_Render is still not completely decompiled and matched meaning that this is the only piece missing
-
-The only platform currently supported is ``Windows64``, all others need to still be implemented
+All projects can be linked against the main game code, whilst there's some unnamed stuff in the Renderer, this works just fine and the game can be played

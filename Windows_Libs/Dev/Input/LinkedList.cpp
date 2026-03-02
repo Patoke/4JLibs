@@ -7,9 +7,9 @@ LinkedList::LinkedList()
     this->m_Tail = nullptr;
 }
 
-void LinkedList::AddToHead(void* pvData)
+void LinkedList::AddToHead(void *pvData)
 {
-    _LL_NODE* pNode = new _LL_NODE();
+    _LL_NODE *pNode = new _LL_NODE();
     pNode->m_pvData = pvData;
 
     if (!m_Tail)
@@ -27,9 +27,9 @@ void LinkedList::AddToHead(void* pvData)
     m_NodeC++;
 }
 
-void LinkedList::AddToTail(void* pvData)
+void LinkedList::AddToTail(void *pvData)
 {
-    _LL_NODE* pNode = new _LL_NODE();
+    _LL_NODE *pNode = new _LL_NODE();
     pNode->m_pvData = pvData;
 
     if (!m_Head)
@@ -37,7 +37,8 @@ void LinkedList::AddToTail(void* pvData)
         m_Head = pNode;
     }
 
-    if (m_Tail) {
+    if (m_Tail)
+    {
         m_Tail->m_Next = pNode;
         pNode->m_Prev = m_Tail;
     }
@@ -49,9 +50,9 @@ void LinkedList::AddToTail(void* pvData)
     m_NodeC++;
 }
 
-void LinkedList::RemoveNode(_LL_NODE* pNodeToRemove)
+void LinkedList::RemoveNode(_LL_NODE *pNodeToRemove)
 {
-    _LL_NODE* pCurrentNode;
+    _LL_NODE *pCurrentNode;
     for (pCurrentNode = m_Head; pCurrentNode != pNodeToRemove; pCurrentNode = pCurrentNode->m_Next)
     {
         ;
@@ -61,7 +62,7 @@ void LinkedList::RemoveNode(_LL_NODE* pNodeToRemove)
     {
         m_Head = m_Head->m_Next;
     }
-    else 
+    else
     {
         pCurrentNode->m_Prev->m_Next = pCurrentNode->m_Next;
 
@@ -74,9 +75,9 @@ void LinkedList::RemoveNode(_LL_NODE* pNodeToRemove)
     m_NodeC--;
 }
 
-LinkedList::_LL_NODE* LinkedList::RemoveHeadNode() 
+LinkedList::_LL_NODE *LinkedList::RemoveHeadNode()
 {
-    _LL_NODE* pHeadNode = m_Head;
+    _LL_NODE *pHeadNode = m_Head;
 
     if (m_NodeC > 0)
     {
@@ -87,11 +88,11 @@ LinkedList::_LL_NODE* LinkedList::RemoveHeadNode()
     return pHeadNode;
 }
 
-void LinkedList::ClearList() 
+void LinkedList::ClearList()
 {
-    while (true) 
+    while (true)
     {
-        _LL_NODE* pHeadNode = RemoveHeadNode();
+        _LL_NODE *pHeadNode = RemoveHeadNode();
         if (!pHeadNode)
         {
             break;

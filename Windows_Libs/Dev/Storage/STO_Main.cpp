@@ -10,17 +10,14 @@ CStorage::CStorage(void)
     m_DLC = CDLC();
 }
 
-void CStorage::Init(int(*Func)(LPVOID, const C4JStorage::ESavingMessage, int), LPVOID lpParam, LPCSTR szGroupID)
-{
+void CStorage::Init(int (*Func)(LPVOID, const C4JStorage::ESavingMessage, int), LPVOID lpParam, LPCSTR szGroupID) {}
 
-}
-
-void CStorage::Tick(void) 
+void CStorage::Tick(void)
 {
     m_DLC.Tick();
 }
 
-unsigned int CStorage::CRC(unsigned char* buf, int len)
+unsigned int CStorage::CRC(unsigned char *buf, int len)
 {
     return ~UpdateCRC(0xFFFFFFFF, buf, len);
 }
@@ -46,7 +43,7 @@ void CStorage::MakeCRCTable(void)
     m_bHasCRCTable = true;
 }
 
-unsigned int CStorage::UpdateCRC(unsigned int crc, unsigned __int8* buf, int len)
+unsigned int CStorage::UpdateCRC(unsigned int crc, unsigned __int8 *buf, int len)
 {
     if (!m_bHasCRCTable)
     {
@@ -55,13 +52,13 @@ unsigned int CStorage::UpdateCRC(unsigned int crc, unsigned __int8* buf, int len
 
     for (int c = 0; c < len; ++c)
     {
-		crc = (crc >> 8) ^ m_CRCTable[(unsigned __int8)(buf[c] ^ crc)];
+        crc = (crc >> 8) ^ m_CRCTable[(unsigned __int8)(buf[c] ^ crc)];
     }
 
     return crc;
 }
 
-void CStorage::DebugPrintf(const char* szFormat, ...)
+void CStorage::DebugPrintf(const char *szFormat, ...)
 {
     char buf[1024];
 
