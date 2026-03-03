@@ -1,6 +1,8 @@
-# 4JLibs
+# 4JLibs (legacy-4jlibs branch)
 
-A project that aims at rebuilding the 4J libraries source code via decompilation for the Minecraft: Legacy Console Edition
+This version of 4JLibs is focused on keeping functionality intact from the original 4JLibs, as in, no code modifications or optimizations specific to 4JLibs (apart from the profiler)
+
+This is will be kept as an archive
 
 ## Why?
 
