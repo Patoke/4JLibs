@@ -88,7 +88,7 @@ C4JStorage::ESaveGameState CSaveGame::GetSavesInfo(int iPad, int (*Func)(LPVOID 
     if (h == INVALID_HANDLE_VALUE)
     {
         DWORD error = GetLastError();
-        printf("Error finding save dirs: 0x%08x\n", error);
+        printf("Error finding save dirs: 0x%08lx\n", error);
     }
     else
     {

@@ -433,3 +433,6 @@ FodyWeavers.xsd
 4J_Profile.h
 
 extraX64.h
+
+.vscode/
+build/

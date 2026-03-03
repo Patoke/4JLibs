@@ -122,7 +122,7 @@ void CForceFeedback::Tick(void)
             LinkedList::_LL_NODE *pTemp = pRumbleNode;
             pRumbleNode = pRumbleNode->m_Next;
 
-            delete pTemp->m_pvData;
+            delete pTemp->GetDataAs<RUMBLE_EFFECT>();
             delete pTemp;
         }
         else
