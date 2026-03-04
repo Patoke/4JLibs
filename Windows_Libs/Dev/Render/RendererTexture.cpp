@@ -53,7 +53,7 @@ HRESULT Renderer::LoadTextureData(BYTE* pbData, DWORD dwBytes, D3DXIMAGE_INFO* p
 
     image.format = PNG_FORMAT_BGRA;
 
-    *ppDataOut = new int[(image.height * image.width * 4) >> 2];
+    *ppDataOut = new int[(4 * image.height * image.width) >> 2];
     if (!*ppDataOut || !png_image_finish_read(&image, NULL, *ppDataOut, NULL, NULL))
         return -1;
 
@@ -76,7 +76,7 @@ HRESULT Renderer::LoadTextureData(const char* szFilename, D3DXIMAGE_INFO* pSrcIn
 
     image.format = PNG_FORMAT_BGRA;
 
-    *ppDataOut = new int[(image.height * image.width * 4) >> 2];
+    *ppDataOut = new int[(4 * image.height * image.width) >> 2];
     if (!*ppDataOut || !png_image_finish_read(&image, NULL, *ppDataOut, NULL, NULL))
         return -1;
 
