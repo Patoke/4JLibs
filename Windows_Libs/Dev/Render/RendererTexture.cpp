@@ -49,13 +49,13 @@ HRESULT Renderer::LoadTextureData(BYTE* pbData, DWORD dwBytes, D3DXIMAGE_INFO* p
     png_image_begin_read_from_memory(&image, pbData, dwBytes);
 
     if (PNG_IMAGE_FAILED(image))
-        return E_FAIL;
+        return -1;
 
     image.format = PNG_FORMAT_BGRA;
 
-    *ppDataOut = new int[image.width * image.height];
+    *ppDataOut = new int[(image.width * image.height * 4) >> 2];
     if (!*ppDataOut || !png_image_finish_read(&image, NULL, *ppDataOut, NULL, NULL))
-        return E_FAIL;
+        return -1;
 
     pSrcInfo->Width = image.width;
     pSrcInfo->Height = image.height;
@@ -72,13 +72,13 @@ HRESULT Renderer::LoadTextureData(const char* szFilename, D3DXIMAGE_INFO* pSrcIn
     png_image_begin_read_from_file(&image, szFilename);
 
     if (PNG_IMAGE_FAILED(image))
-        return E_FAIL;
+        return -1;
 
     image.format = PNG_FORMAT_BGRA;
 
-    *ppDataOut = new int[image.width * image.height];
+    *ppDataOut = new int[(image.width * image.height * 4) >> 2];
     if (!*ppDataOut || !png_image_finish_read(&image, NULL, *ppDataOut, NULL, NULL))
-        return E_FAIL;
+        return -1;
 
     pSrcInfo->Width = image.width;
     pSrcInfo->Height = image.height;
@@ -91,8 +91,6 @@ HRESULT Renderer::SaveTextureData(const char* szFilename, D3DXIMAGE_INFO* pSrcIn
     png_image image;
     std::memset(&image, 0, sizeof(image));
 
-    image.opaque = NULL;
-    image.colormap_entries = 0;
     image.width = pSrcInfo->Width;
     image.height = pSrcInfo->Height;
     image.version = PNG_IMAGE_VERSION;
@@ -174,16 +172,15 @@ void Renderer::TextureData(int width, int height, void* data, int level, C4JRend
 {
     PROFILER_SCOPE("Renderer::TextureData", "TextureData", MP_PURPLE4);
     Context& c = getContext();
-    int idx = c.textureIdx;
 
-    m_textures[idx].textureFormat = format;
+    m_textures[c.textureIdx].textureFormat = format;
 
-    if (level == 0)
+    if (!level)
     {
         D3D11_TEXTURE2D_DESC desc;
         desc.Width = width;
         desc.Height = height;
-        desc.MipLevels = m_textures[idx].mipLevels;
+        desc.MipLevels = m_textures[c.textureIdx].mipLevels;
         desc.ArraySize = 1;
         desc.Format = textureFormats[format];
         desc.SampleDesc.Count = 1;
@@ -193,17 +190,17 @@ void Renderer::TextureData(int width, int height, void* data, int level, C4JRend
         desc.CPUAccessFlags = 0;
         desc.MiscFlags = 0;
 
-        m_pDevice->CreateTexture2D(&desc, NULL, &m_textures[idx].texture);
-        m_pDevice->CreateShaderResourceView(m_textures[idx].texture, NULL, &m_textures[idx].view);
+        m_pDevice->CreateTexture2D(&desc, NULL, &m_textures[c.textureIdx].texture);
+        m_pDevice->CreateShaderResourceView(m_textures[c.textureIdx].texture, NULL, &m_textures[c.textureIdx].view);
     }
 
     c.m_pDeviceContext->UpdateSubresource(
-        m_textures[idx].texture,
+        m_textures[c.textureIdx].texture,
         level,
         NULL,
         data,
         static_cast<UINT>(width * 4),
-        static_cast<UINT>(width * level * 4)
+        static_cast<UINT>(height * width * 4)
     );
 }
 
@@ -220,17 +217,16 @@ void Renderer::TextureDataUpdate(int xoffset, int yoffset, int width, int height
     box.front = 0;
     box.back = 1;
 
-    int idx = c.textureIdx;
     D3D11_TEXTURE2D_DESC desc;
-    m_textures[idx].texture->GetDesc(&desc);
+    m_textures[c.textureIdx].texture->GetDesc(&desc);
 
     c.m_pDeviceContext->UpdateSubresource(
-        m_textures[idx].texture,
+        m_textures[c.textureIdx].texture,
         level,
         &box,
         data,
-        static_cast<UINT>(height * 4),
-        static_cast<UINT>(height * level * 4)
+        static_cast<UINT>(width * 4),
+        static_cast<UINT>(height * width * 4)
     );
 }
 
@@ -251,11 +247,14 @@ void Renderer::TextureGetStats() {}
 
 ID3D11ShaderResourceView* Renderer::TextureGetTexture(int idx)
 {
-    if (idx < MAX_TEXTURES) {
-        if (m_textures[idx].allocated) return m_textures[idx].view;
+    ID3D11ShaderResourceView* result = nullptr;
+    if (static_cast<unsigned int>(idx) <= 0x1FF) {
+        if (m_textures[idx].allocated)
+            result = m_textures[idx].view;
     }
-    return NULL;
+    return result;
 }
+
 
 int Renderer::TextureGetTextureLevels()
 {
@@ -265,38 +264,39 @@ int Renderer::TextureGetTextureLevels()
 
 void Renderer::TextureSetParam(int param, int value)
 {
-    Context& c = getContext();
-    int idx = c.textureIdx;
+    Context &c = getContext();
+
+    if (!param)
+        return;
 
     switch (param)
     {
     case GL_TEXTURE_MIN_FILTER:
-        m_textures[idx].samplerParams &= ~4u;
+        m_textures[c.textureIdx].samplerParams &= ~4;
         if (value == GL_LINEAR)
-            m_textures[idx].samplerParams |= 4u;
+            m_textures[c.textureIdx].samplerParams |= 4;
         break;
     case GL_TEXTURE_MAG_FILTER:
-        m_textures[idx].samplerParams &= ~8u;
+        m_textures[c.textureIdx].samplerParams &= ~8;
         if (value == GL_LINEAR)
-            m_textures[idx].samplerParams |= 8u;
+            m_textures[c.textureIdx].samplerParams |= 8;
         break;
     case GL_TEXTURE_WRAP_S:
-        m_textures[idx].samplerParams &= ~1u;
+        m_textures[c.textureIdx].samplerParams &= ~1;
         if (value == GL_CLAMP)
-            m_textures[idx].samplerParams |= 1u;
+            m_textures[c.textureIdx].samplerParams |= 1;
         break;
     case GL_TEXTURE_WRAP_T:
-        m_textures[idx].samplerParams &= ~2u;
+        m_textures[c.textureIdx].samplerParams &= ~2;
         if (value == GL_CLAMP)
-            m_textures[idx].samplerParams |= 2u;
+            m_textures[c.textureIdx].samplerParams |= 2;
         break;
     }
 }
 
 void Renderer::TextureSetTextureLevels(int levels)
 {
-    Context& c = getContext();
-    m_textures[c.textureIdx].mipLevels = levels;
+    m_textures[getContext().textureIdx].mipLevels = levels;
 }
 
 void Renderer::UpdateTextureState(bool bVertex)

@@ -358,7 +358,7 @@ public:
         bool matrixDirty[MATRIX_MODE_MODELVIEW_MAX];
         DWORD stackPos[MATRIX_MODE_MODELVIEW_MAX];
         DWORD stackType;
-        DWORD textureIdx;
+        int textureIdx;
         bool faceCullEnabled;
         bool depthTestEnabled;
         bool alphaTestEnabled;
