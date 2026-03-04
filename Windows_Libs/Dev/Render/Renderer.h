@@ -36,11 +36,10 @@ SOFTWARE.
 #define MATRIX_MODE_MODELVIEW_CBUFF      3
 #define MATRIX_MODE_MODELVIEW_MAX        4
 
-#define STACK_TYPES    4
-#define STACK_SIZE     16
-#define MAX_MIP_LEVELS 5
-#define MAX_TEXTURES 512
-
+#define STACK_TYPES         4
+#define STACK_SIZE          16
+#define MAX_MIP_LEVELS      5
+#define MAX_TEXTURES        512
 #define NUM_COMMAND_HANDLES 0x800000
 #define MAX_COMMAND_BUFFERS 16000
 
@@ -50,6 +49,11 @@ public:
     class Context;
     class CommandBuffer;
 
+    //======================================================
+    // Matrix stack
+    //======================================================
+    #pragma region Matrix stack
+    public:
     void UpdateGamma(unsigned short usGamma);
     void MatrixMode(int type);
     void MatrixSetIdentity();
@@ -63,6 +67,16 @@ public:
     void MatrixMult(float *mat);
     const float *MatrixGet(int type);
     void Set_matrixDirty();
+
+    private:
+    void MultWithStack(DirectX::XMMATRIX matrix);
+    #pragma endregion
+
+    //======================================================
+    // Core
+    //======================================================
+    #pragma region Core
+    public:
     void Initialise(ID3D11Device *pDevice, IDXGISwapChain *pSwapChain);
     ID3D11DeviceContext *InitialiseContext(bool fromPresent);
     void StartFrame();
@@ -78,10 +92,29 @@ public:
     void EndConditionalSurvey();
     void BeginConditionalRendering(int identifier);
     void EndConditionalRendering();
-    void DrawVertices(C4JRender::ePrimitiveType PrimitiveType, int count, void *dataIn, C4JRender::eVertexType vType,
-                      C4JRender::ePixelShaderType psType);
-    void DrawVertexBuffer(C4JRender::ePrimitiveType PrimitiveType, int count, ID3D11Buffer *buffer, C4JRender::eVertexType vType,
-                          C4JRender::ePixelShaderType psType);
+
+    private:
+    void SetupShaders();
+    Renderer::Context &getContext();
+    #pragma endregion
+
+    //======================================================
+    // Vertex data handling
+    //======================================================
+    #pragma region Vertex data handling
+    public:
+    void DrawVertices(C4JRender::ePrimitiveType PrimitiveType, int count, void *dataIn, C4JRender::eVertexType vType, C4JRender::ePixelShaderType psType);
+    void DrawVertexBuffer(C4JRender::ePrimitiveType PrimitiveType, int count, ID3D11Buffer *buffer, C4JRender::eVertexType vType, C4JRender::ePixelShaderType psType);
+
+    private:
+    void DrawVertexSetup(C4JRender::eVertexType vType, C4JRender::ePixelShaderType psType, C4JRender::ePrimitiveType primitiveType, int *count, bool *drawIndexed);
+    #pragma endregion
+
+    //======================================================
+    // Command buffers
+    //======================================================
+    #pragma region Command buffers
+    public:
     void CBuffLockStaticCreations();
     int CBuffCreate(int count);
     void CBuffDelete(int first, int count);
@@ -93,6 +126,16 @@ public:
     void CBuffTick();
     void CBuffDeferredModeStart();
     void CBuffDeferredModeEnd();
+
+    private:
+    void DeleteInternalBuffer(int index);
+    #pragma endregion
+
+    //======================================================
+    // Textures
+    //======================================================
+    #pragma region Textures
+    public:
     int TextureCreate();
     void TextureFree(int idx);
     void TextureBind(int idx);
@@ -110,6 +153,16 @@ public:
     HRESULT SaveTextureDataToMemory(void *pOutput, int outputCapacity, int *outputLength, int width, int height, int *ppDataIn);
     void TextureGetStats();
     ID3D11ShaderResourceView *TextureGetTexture(int idx);
+
+    private:
+    void ConvertLinearToPng(ImageFileBuffer *pngOut, unsigned char *linearData, unsigned int width, unsigned int height);
+    #pragma endregion
+
+    //======================================================
+    // State control
+    //======================================================
+    #pragma region State control
+    public:
     void StateSetColour(float r, float g, float b, float a);
     void StateSetDepthMask(bool enable);
     void StateSetBlendEnable(bool enable);
@@ -141,30 +194,51 @@ public:
     void StateSetTexGenCol(int col, float x, float y, float z, float w, bool eyeSpace);
     void StateSetStencil(D3D11_COMPARISON_FUNC function, uint8_t stencil_ref, uint8_t stencil_func_mask, uint8_t stencil_write_mask);
     void StateSetForceLOD(int LOD);
-    void BeginEvent(LPCWSTR eventName);
-    void EndEvent();
-    void Suspend();
-    bool Suspended();
-    void Resume();
     void StateUpdate();
-private:
-    void SetupShaders();
-    void ConvertLinearToPng(ImageFileBuffer *pngOut, unsigned char *linearData, unsigned int width, unsigned int height);
-    void DrawVertexSetup(C4JRender::eVertexType vType, C4JRender::ePixelShaderType psType, C4JRender::ePrimitiveType primitiveType, int *count,
-                         bool *drawIndexed);
+
+    private:
     void UpdateTexGenState();
     void UpdateLightingState();
     void UpdateViewportState();
     void UpdateFogState();
+
     void UpdateTextureState(bool vertexSampler);
-    void MultWithStack(DirectX::XMMATRIX matrix);
     ID3D11DepthStencilState *GetManagedDepthStencilState();
     ID3D11BlendState *GetManagedBlendState();
     ID3D11RasterizerState *GetManagedRasterizerState();
     ID3D11SamplerState *GetManagedSamplerState();
-    void DeleteInternalBuffer(int index);
-    Renderer::Context &getContext();
+    #pragma endregion
+
+    //======================================================
+    // Event tracking
+    //======================================================
+    #pragma region Event tracking
+    public:
+    void BeginEvent(LPCWSTR eventName);
+    void EndEvent();
+    #pragma endregion
+
+    //======================================================
+    // PLM event handling
+    //======================================================
+    #pragma region PLM event handling
+    void Suspend();
+    bool Suspended();
+    void Resume();
+    #pragma endregion
+
+private:
+    static int totalAlloc;
+    static _RTL_CRITICAL_SECTION totalAllocCS;
+    static DWORD tlsIdx;
+    static DWORD s_auiWidths[];
+    static DWORD s_auiHeights[];
+    static DXGI_FORMAT textureFormats[];
+
 public:
+    static D3D_PRIMITIVE_TOPOLOGY m_Topologies[];
+    static const float PI;
+
     struct Texture
     {
         bool allocated;
@@ -207,6 +281,7 @@ public:
     public:
         CommandBuffer(bool full);
         ~CommandBuffer();
+
         void StartRecording();
         void EndRecording(ID3D11Device *device);
         std::uint64_t GetAllocated();
@@ -229,6 +304,7 @@ public:
         void SetFaceCull(bool enable);
         void Render(C4JRender::eVertexType vType, Renderer::Context &c, int primitiveType);
 
+        // TODO(3UR): clean this
         struct Command
         {
             Renderer::eCommandType m_command_type;
@@ -241,7 +317,6 @@ public:
                 struct
                 {
                     float m_matrix[16];
-                    // DirectX::XMMATRIX m_matrix;
                 } add_matrix;
 
                 struct
@@ -327,6 +402,7 @@ public:
                 } set_face_cull;
             };
         };
+
         ID3D11Buffer *m_vertexBuffer;
         void *m_vertexData;
         std::uint64_t m_vertexDataLength;
@@ -349,19 +425,28 @@ public:
     public:
         Context(ID3D11Device *device, ID3D11DeviceContext *deviceContext);
 
+        // D3D context
         ID3D11DeviceContext *m_pDeviceContext;
         ID3DUserDefinedAnnotation *userAnnotation;
         int annotateDepth;
+
+        // Matrix stacks
         DirectX::XMMATRIX matrixStacks[MATRIX_MODE_MODELVIEW_MAX][STACK_SIZE];
         bool matrixDirty[MATRIX_MODE_MODELVIEW_MAX];
         DWORD stackPos[MATRIX_MODE_MODELVIEW_MAX];
         DWORD stackType;
+
+        // Texture
         int textureIdx;
+
+        // Rasterizer state
         bool faceCullEnabled;
         bool depthTestEnabled;
         bool alphaTestEnabled;
         float alphaReference;
         bool depthWriteEnabled;
+
+        // Fog state
         bool fogEnabled;
         float fogNearDistance;
         float fogFarDistance;
@@ -370,6 +455,8 @@ public:
         float fogColourBlue;
         float fogColourGreen;
         DWORD fogMode;
+
+        // Lighting state
         bool lightingEnabled;
         bool lightEnabled[2];
         bool lightingDirty;
@@ -378,6 +465,8 @@ public:
         DirectX::XMFLOAT4 lightDirection[2];
         DirectX::XMFLOAT4 lightColour[2];
         DirectX::XMFLOAT4 lightAmbientColour;
+
+        // Constant buffers
         ID3D11Buffer *m_modelViewMatrix;
         ID3D11Buffer *m_localTransformMatrix;
         ID3D11Buffer *m_projectionMatrix;
@@ -394,45 +483,45 @@ public:
         ID3D11Buffer *m_alphaTestBuffer;
         ID3D11Buffer *m_clearColorBuffer;
         ID3D11Buffer *m_forcedLODBuffer;
+
+        // Dynamic vertex buffer
         uint64_t dynamicVertexBase;
         DWORD dynamicVertexOffset;
         ID3D11Buffer *dynamicVertexBuffer;
+
+        // Tex gen
         DirectX::XMMATRIX texGenMatrices[2];
+
+        // Command buffer recording
         Renderer::CommandBuffer *commandBuffer;
         DWORD recordingBufferIndex;
         DWORD recordingVertexType;
         DWORD recordingPrimitiveType;
         bool deferredModeEnabled;
         std::vector<DeferredCBuff> deferredBuffers;
+
+        // D3D state descs
         D3D11_BLEND_DESC blendDesc;
         D3D11_DEPTH_STENCIL_DESC depthStencilDesc;
         D3D11_RASTERIZER_DESC rasterizerDesc;
         float blendFactor[4];
     };
 
-    static DWORD tlsIdx;
-    static _RTL_CRITICAL_SECTION totalAllocCS;
-    static DWORD s_auiWidths[];
-    static DWORD s_auiHeights[];
-
-    private:
-    static DXGI_FORMAT textureFormats[];
-    
-    public:
-    static D3D_PRIMITIVE_TOPOLOGY m_Topologies[];
-    static int totalAlloc;
-    static const float PI;
-
+    // D3D device
     float m_fClearColor[4];
     ID3D11Device *m_pDevice;
     ID3D11DeviceContext *m_pDeviceContext;
     IDXGISwapChain *m_pSwapChain;
+
+    // RTs
     ID3D11RenderTargetView *renderTargetView;
     ID3D11RenderTargetView *renderTargetViews[4];
     ID3D11ShaderResourceView *renderTargetShaderResourceView;
     ID3D11ShaderResourceView *renderTargetShaderResourceViews[4];
     ID3D11Texture2D *renderTargetTextures[4];
     ID3D11DepthStencilView *depthStencilView;
+
+    // Shaders
     ID3D11VertexShader **vertexShaderTable;
     ID3D11VertexShader *screenSpaceVertexShader;
     ID3D11VertexShader *screenClearVertexShader;
@@ -440,26 +529,34 @@ public:
     ID3D11PixelShader *screenSpacePixelShader;
     ID3D11PixelShader *screenClearPixelShader;
     unsigned int *vertexStrideTable;
-    ID3D11InputLayout **inputLayoutTable;
+
+    // Index buffers
     ID3D11Buffer *quadIndexBuffer;
     ID3D11Buffer *fanIndexBuffer;
+
+    // Renderer state
     DWORD defaultTextureIndex;
     WORD reservedRendererWord0;
-    BYTE paddingAfterRendererWord0[2];
     DWORD presentCount;
     BYTE rendererFlag0;
-    BYTE paddingAfterRendererFlag0[3];
+
     _RTL_CRITICAL_SECTION m_commandBufferCS;
+
+    // Active shader state
     DWORD activeVertexType;
     DWORD activePixelType;
     C4JRender::eViewportType m_ViewportType;
     BYTE reservedRendererByte0;
-    BYTE paddingAfterViewportType[3];
-    Renderer::Texture m_textures[512];
+
+    // Textures
+    Renderer::Texture m_textures[MAX_TEXTURES];
+
+    // Backbuffer dimensions
     DWORD backBufferWidth;
     DWORD backBufferHeight;
     BYTE reservedRendererByte1;
-    BYTE paddingAfterRendererByte1[3];
+
+    // Command buffers
     DWORD reservedRendererDword1;
     int16_t *m_commandHandleToIndex;
     CommandBuffer **m_commandBuffers;
@@ -469,16 +566,21 @@ public:
     uint8_t *m_commandVertexTypes;
     DWORD reservedRendererDword2;
     DWORD reservedRendererDword3;
+
+    // Managed D3D state cache
     std::unordered_map<int, ID3D11BlendState *> managedBlendStates;
     std::unordered_map<int, ID3D11DepthStencilState *> managedDepthStencilStates;
     std::unordered_map<int, ID3D11SamplerState *> managedSamplerStates;
     std::unordered_map<int, ID3D11RasterizerState *> managedRasterizerStates;
+
     bool m_bShouldScreenGrabNextFrame;
     bool m_bSuspended;
-    
+
     // @Patoke add
     ID3D11Texture2D *m_backBufferTexture;
 };
+
+extern ID3D11InputLayout **g_vertexInputLayout;
 
 // Singleton
 extern Renderer InternalRenderManager;
