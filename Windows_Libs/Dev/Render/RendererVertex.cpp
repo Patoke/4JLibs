@@ -25,6 +25,11 @@ SOFTWARE.
 #include "stdafx.h"
 #include "Renderer.h"
 
+D3D11_PRIMITIVE_TOPOLOGY Renderer::m_Topologies[C4JRender::PRIMITIVE_TYPE_COUNT] = {
+    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
+    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, D3D11_PRIMITIVE_TOPOLOGY_LINELIST,      D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP,
+};
+
 void Renderer::DrawVertexBuffer(C4JRender::ePrimitiveType PrimitiveType, int count, ID3D11Buffer *buffer, C4JRender::eVertexType vType,
                                 C4JRender::ePixelShaderType psType)
 {
@@ -104,7 +109,7 @@ void Renderer::DrawVertexSetup(C4JRender::eVertexType vType, C4JRender::ePixelSh
     UpdateLightingState();
     UpdateTexGenState();
 
-    d3d11->IASetPrimitiveTopology(g_topologies[PrimitiveType]);
+    d3d11->IASetPrimitiveTopology(m_Topologies[PrimitiveType]);
 
     if (PrimitiveType == C4JRender::PRIMITIVE_TYPE_QUAD_LIST)
     {

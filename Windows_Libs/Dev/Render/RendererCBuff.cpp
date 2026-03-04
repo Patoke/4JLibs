@@ -179,7 +179,7 @@ bool Renderer::CBuffCall(int index, bool full)
                 activePixelType = pixelType;
             }
 
-            c.m_pDeviceContext->IASetPrimitiveTopology(g_topologies[primitiveType]);
+            c.m_pDeviceContext->IASetPrimitiveTopology(m_Topologies[primitiveType]);
 
             ID3D11Buffer *indexBuffer = NULL;
             if (primitiveType == C4JRender::PRIMITIVE_TYPE_QUAD_LIST)
