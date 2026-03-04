@@ -60,7 +60,25 @@ void Renderer::CommandBuffer::AddMatrix(const float *matrix)
 {
     Command command;
     command.m_command_type = COMMAND_ADD_MATRIX;
-    std::memcpy(command.add_matrix.m_matrix, matrix, sizeof(command.add_matrix.m_matrix));
+    //dumb, but keep for matching
+    const std::uint32_t (&srcData)[16] = *reinterpret_cast<const std::uint32_t (*)[16]>(matrix);
+    std::uint32_t (&dstData)[16] = *reinterpret_cast<std::uint32_t (*)[16]>(command.add_matrix.m_matrix);
+    dstData[0] = srcData[0];
+    dstData[1] = srcData[1];
+    dstData[2] = srcData[2];
+    dstData[3] = srcData[3];
+    dstData[4] = srcData[4];
+    dstData[5] = srcData[5];
+    dstData[6] = srcData[6];
+    dstData[7] = srcData[7];
+    dstData[8] = srcData[8];
+    dstData[9] = srcData[9];
+    dstData[10] = srcData[10];
+    dstData[11] = srcData[11];
+    dstData[12] = srcData[12];
+    dstData[13] = srcData[13];
+    dstData[14] = srcData[14];
+    dstData[15] = srcData[15];
     m_commands.push_back(command);
 }
 
