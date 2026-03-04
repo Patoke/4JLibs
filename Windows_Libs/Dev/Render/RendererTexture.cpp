@@ -91,6 +91,8 @@ HRESULT Renderer::SaveTextureData(const char* szFilename, D3DXIMAGE_INFO* pSrcIn
     png_image image;
     memset(&image, 0, sizeof(image));
 
+    image.opaque = NULL;
+    image.colormap_entries = 0;
     image.width = pSrcInfo->Width;
     image.height = pSrcInfo->Height;
     image.version = PNG_IMAGE_VERSION;
@@ -201,7 +203,7 @@ void Renderer::TextureData(int width, int height, void* data, int level, C4JRend
         NULL,
         data,
         static_cast<UINT>(width * 4),
-        static_cast<UINT>(width * height * 4)
+        static_cast<UINT>(width * level * 4)
     );
 }
 
@@ -209,12 +211,8 @@ void Renderer::TextureDataUpdate(int xoffset, int yoffset, int width, int height
 {
     PROFILER_SCOPE("Renderer::TextureDataUpdate", "TextureDataUpdate", MP_PURPLE4);
     Context& c = getContext();
-    int idx = c.textureIdx;
 
-    D3D11_TEXTURE2D_DESC desc = {};
-    m_textures[idx].texture->GetDesc(&desc);
-
-    D3D11_BOX box = {};
+    D3D11_BOX box;
     box.left = xoffset;
     box.top = yoffset;
     box.right = xoffset + width;
@@ -222,13 +220,17 @@ void Renderer::TextureDataUpdate(int xoffset, int yoffset, int width, int height
     box.front = 0;
     box.back = 1;
 
+    int idx = c.textureIdx;
+    D3D11_TEXTURE2D_DESC desc;
+    m_textures[idx].texture->GetDesc(&desc);
+
     c.m_pDeviceContext->UpdateSubresource(
         m_textures[idx].texture,
         level,
         &box,
         data,
-        static_cast<UINT>(width * 4),
-        static_cast<UINT>(width * height * 4)
+        static_cast<UINT>(height * 4),
+        static_cast<UINT>(height * level * 4)
     );
 }
 
@@ -311,10 +313,9 @@ void Renderer::UpdateTextureState(bool bVertex)
 void user_flush_data(png_struct_def* png_ptr) {}
 void user_write_data(png_struct_def* png_ptr, unsigned char* src, size_t length)
 {
-    int bytesToWrite = static_cast<int>(dataEnd - dataCurr);
-    if (static_cast<int>(length) < bytesToWrite)
-        bytesToWrite = (int)length;
-
+    int bytesToWrite = static_cast<size_t>(dataEnd - dataCurr);
+    if (length < bytesToWrite)
+        bytesToWrite = length;
     std::memcpy(dataCurr, src, bytesToWrite);
     dataCurr += bytesToWrite;
 }
