@@ -413,7 +413,11 @@ public:
     static _RTL_CRITICAL_SECTION totalAllocCS;
     static DWORD s_auiWidths[];
     static DWORD s_auiHeights[];
+
+    private:
     static DXGI_FORMAT textureFormats[];
+    
+    public:
     static D3D_PRIMITIVE_TOPOLOGY m_Topologies[];
     static int totalAlloc;
     static const float PI;

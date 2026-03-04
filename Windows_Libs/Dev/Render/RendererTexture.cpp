@@ -31,8 +31,7 @@ unsigned char *dataCurr;
 unsigned char *dataEnd;
 
 DXGI_FORMAT Renderer::textureFormats[] = { 
-    DXGI_FORMAT_R8G8B8A8_UNORM, 
-    DXGI_FORMAT_UNKNOWN 
+    DXGI_FORMAT_R8G8B8A8_UNORM 
 };
 
 // these are here because they are used before they are defined
