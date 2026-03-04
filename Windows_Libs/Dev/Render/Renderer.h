@@ -414,7 +414,7 @@ public:
     static DWORD s_auiWidths[];
     static DWORD s_auiHeights[];
     static DXGI_FORMAT textureFormats[];
-    static D3D_PRIMITIVE_TOPOLOGY g_topologies[];
+    static D3D_PRIMITIVE_TOPOLOGY m_Topologies[];
     static int totalAlloc;
     static const float PI;
 
