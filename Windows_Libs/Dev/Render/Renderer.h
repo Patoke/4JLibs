@@ -472,7 +472,7 @@ public:
     bool m_bSuspended;
     
     // @Patoke add
-    ID3D11Texture2D *m_backBufferTexture = NULL;
+    ID3D11Texture2D *m_backBufferTexture;
 };
 
 // Singleton
