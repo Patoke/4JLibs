@@ -30,9 +30,7 @@ C4JRender RenderManager;
 
 void C4JRender::Tick()
 {
-#if _DEBUG
 	InternalRenderManager.CBuffTick();
-#endif
 }
 
 void C4JRender::UpdateGamma(unsigned short usGamma)
@@ -152,27 +150,22 @@ void C4JRender::CaptureThumbnail(ImageFileBuffer* pngOut)
 
 void C4JRender::CaptureScreen(ImageFileBuffer* jpgOut, XSOCIAL_PREVIEWIMAGE* previewOut)
 {
-	InternalRenderManager.CaptureScreen(jpgOut, previewOut);
 }
 
 void C4JRender::BeginConditionalSurvey(int identifier)
 {
-	InternalRenderManager.BeginConditionalSurvey(identifier);
 }
 
 void C4JRender::EndConditionalSurvey()
 {
-	InternalRenderManager.EndConditionalSurvey();
 }
 
 void C4JRender::BeginConditionalRendering(int identifier)
 {
-	InternalRenderManager.BeginConditionalRendering(identifier);
 }
 
 void C4JRender::EndConditionalRendering()
 {
-	InternalRenderManager.EndConditionalRendering();
 }
 
 void C4JRender::DrawVertices(ePrimitiveType PrimitiveType, int count, void* dataIn, eVertexType vType, ePixelShaderType psType)

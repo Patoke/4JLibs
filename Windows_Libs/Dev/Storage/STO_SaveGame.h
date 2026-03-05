@@ -53,6 +53,10 @@ public:
 
     void CreateSaveUniqueName(void);
 
+    // @Patoke add: definition taken from the Xbox One binaries
+    void AddTextFieldToPNG(PBYTE pbImageData, DWORD dwImageBytes, PBYTE pbTextData, DWORD dwTextBytes, DWORD dwTotalSizeAllocated);
+    unsigned int ReverseBytes(unsigned int uiValue);
+
     void *m_pSaveData;
     unsigned int m_uiSaveSize;
     char m_szSaveUniqueName[32];
@@ -60,4 +64,13 @@ public:
     bool m_bIsSafeDisabled;
     bool m_bHasSaveDetails;
     SAVE_DETAILS *m_pSaveDetails;
+
+    // @Patoke add
+    PBYTE m_pbThumbnailData;
+    unsigned int m_uiThumbnailSize;
+
+    PBYTE m_pbImageData;
+    unsigned int m_uiImageSize;
+
+    static char szPNGHeader[];
 };

@@ -427,9 +427,23 @@ FodyWeavers.xsd
 *.msm
 *.msp
 
+# special headers
 4J_Input.h
 4J_Storage.h
 4J_Render.h
 4J_Profile.h
 
 extraX64.h
+
+# generated shader headers
+VS_PF3_TF2_CB4_NB4_XW1.h
+VS_Compressed.h
+VS_PF3_TF2_CB4_NB4_XW1_LIGHTING.h
+VS_PF3_TF2_CB4_NB4_XW1_TEXGEN.h
+VS_ScreenSpace.h
+VS_ScreenClear.h
+PS_Standard.h
+PS_TextureProjection.h
+PS_ForceLOD.h
+PS_ScreenSpace.h
+PS_ScreenClear.h

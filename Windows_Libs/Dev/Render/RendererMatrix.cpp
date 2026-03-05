@@ -22,8 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "stdafx.h"
 #include "Renderer.h"
+#include "stdafx.h"
 
 #include <cstring>
 
@@ -31,7 +31,8 @@ const float *Renderer::MatrixGet(int type)
 {
     Context &c = getContext();
     const int depth = c.stackPos[type];
-    return reinterpret_cast<const float *>(&c.matrixStacks[type][depth]);
+    const DirectX::XMMATRIX &matrix = c.matrixStacks[type][depth];
+    return &matrix.r[0].m128_f32[0];
 }
 
 void Renderer::MatrixMode(int type)
@@ -57,7 +58,7 @@ void Renderer::MatrixOrthogonal(float left, float right, float bottom, float top
 
 void Renderer::MatrixPerspective(float fovy, float aspect, float zNear, float zFar)
 {
-    const float fovRadians = fovy * (3.14159274f / 180.0f);
+    const float fovRadians = fovy * (PI / 180.0f);
     const DirectX::XMMATRIX matrix = DirectX::XMMatrixPerspectiveFovRH(fovRadians, aspect, zNear, zFar);
     MultWithStack(matrix);
 }
@@ -76,7 +77,7 @@ void Renderer::MatrixPop()
 void Renderer::MatrixPush()
 {
     Context &c = getContext();
-    
+
     assert(c.stackPos[c.stackType] < (STACK_SIZE - 1));
 
     const int mode = c.stackType;

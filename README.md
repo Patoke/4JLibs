@@ -4,6 +4,19 @@ This version of 4JLibs is focused on keeping functionality intact from the origi
 
 This is will be kept as an archive
 
+## NOTICE
+
+There's a bug in the main game code where the depth stencil view descriptor isn't zero initialized, this happens in the file ``Windows64_Minecraft.cpp`` at the 
+```D3D11_DEPTH_STENCIL_VIEW_DESC descDSView;``` line
+
+
+This causes the depth stencil view creation to fail and consequently breaks the game, to fix this you will need to add the following line after the definition described:
+
+```ZeroMemory(&descDSView, sizeof(descDSView));```
+
+This issue only happens when building with newer versions of the Visual Studio compiler, Visual Studio 2012 isn't affected by this, so if you're working on a fork of the main source
+remember to add this line to avoid breaking the game for other people
+
 ## Why?
 
 This would allow compiling the Minecraft: Legacy Console Edition source code from newer versions of Visual Studio, expand the Renderer code, add new Input support, etc...

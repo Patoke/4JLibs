@@ -1,4 +1,3 @@
-#pragma once
 /*
 MIT License
 
@@ -22,18 +21,28 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+cbuffer screenspace_constants : register(b9)
+{
+    float4 v_scaleoffset;
+};
 
-// Vertex shaders
-#include "VS_Compressed.h"
-#include "VS_PF3_TF2_CB4_NB4_XW1.h"
-#include "VS_PF3_TF2_CB4_NB4_XW1_LIGHTING.h"
-#include "VS_PF3_TF2_CB4_NB4_XW1_TEXGEN.h"
-#include "VS_ScreenClear.h"
-#include "VS_ScreenSpace.h"
+void VS_ScreenSpace(uint vertex_id : SV_VertexID, out float4 position : SV_POSITION, out float2 texcoord : TEXCOORD0)
+{
+    float2 corner = float2(
+        (vertex_id << 1) & 2,
+        vertex_id & 2
+    );
 
-// Pixel shaders
-#include "PS_Standard.h"
-#include "PS_TextureProjection.h"
-#include "PS_ForceLOD.h"
-#include "PS_ScreenSpace.h"
-#include "PS_ScreenClear.h"
+    position = float4(corner * float2(2, -2) + float2(-1, 1), 1, 1);
+    texcoord = corner * 0.5 * v_scaleoffset.zw + v_scaleoffset.xy;
+}
+
+void VS_ScreenClear(uint vertex_id : SV_VertexID, out float4 position : SV_POSITION)
+{
+    float2 corner = float2(
+        (vertex_id << 1) & 2,
+        vertex_id & 2
+    );
+
+    position = float4(corner * float2(2, -2) + float2(-1, 1), 1, 1);
+}

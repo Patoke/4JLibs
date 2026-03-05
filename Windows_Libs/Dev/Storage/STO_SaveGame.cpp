@@ -23,6 +23,10 @@ SOFTWARE.
 */
 
 #include "STO_SaveGame.h"
+#include "STO_Main.h"
+
+// @Patoke add
+char CSaveGame::szPNGHeader[] = "\x89\x50\x4E\x47\x0D\x0A\x1A\x0A";
 
 CSaveGame::CSaveGame()
 {
@@ -43,6 +47,12 @@ CSaveGame::CSaveGame()
     GetCurrentDirectoryA(sizeof(dirName), dirName);
     sprintf(curDir, "%s/Windows64/GameHDD/", dirName);
     CreateDirectoryA(curDir, 0);
+
+    // @Patoke add
+    this->m_pbThumbnailData = nullptr;
+    this->m_uiThumbnailSize = 0;
+    this->m_pbImageData = nullptr;
+    this->m_uiImageSize = 0;
 }
 
 void CSaveGame::SetSaveDisabled(bool bDisable)
@@ -124,7 +134,14 @@ C4JStorage::ESaveGameState CSaveGame::GetSavesInfo(int iPad, int (*Func)(LPVOID 
                     sprintf(fileName, "%s\\Windows64\\GameHDD\\%s\\saveData.ms", dirName, findFileData.cFileName);
 
                     GetFileAttributesExA(fileName, GetFileExInfoStandard, &fileInfoBuffer);
-                    m_pSaveDetails->SaveInfoA[i++].metaData.dataSize = fileInfoBuffer.nFileSizeLow;
+                    m_pSaveDetails->SaveInfoA[i].metaData.dataSize = fileInfoBuffer.nFileSizeLow;
+
+                    char thumbName[280];
+                    sprintf(thumbName, "%s\\Windows64\\GameHDD\\%s\\thumbData.png", dirName, findFileData.cFileName);
+
+                    GetFileAttributesExA(thumbName, GetFileExInfoStandard, &fileInfoBuffer);
+                    m_pSaveDetails->SaveInfoA[i++].metaData.thumbnailSize = fileInfoBuffer.nFileSizeLow;
+
                     m_pSaveDetails->iSaveC++;
                 }
             } while (FindNextFileA(fi, &findFileData));
@@ -165,9 +182,46 @@ void CSaveGame::ClearSavesInfo()
     }
 }
 
+// @Patoke add
 C4JStorage::ESaveGameState CSaveGame::LoadSaveDataThumbnail(PSAVE_INFO pSaveInfo,
                                                             int (*Func)(LPVOID lpParam, PBYTE pbThumbnail, DWORD dwThumbnailBytes), LPVOID lpParam)
 {
+    if (pSaveInfo == nullptr)
+    {
+        return C4JStorage::ESaveGame_Idle;
+    }
+
+    DWORD thumbSize = pSaveInfo->metaData.thumbnailSize;
+    if (thumbSize > 0 && pSaveInfo->thumbnailData == nullptr)
+    {
+        char curDir[256];
+        GetCurrentDirectoryA(sizeof(curDir), curDir);
+
+        const char *saveName = (const char *)pSaveInfo;
+
+        char thumbPath[512];
+        sprintf(thumbPath, "%s/Windows64/GameHDD/%s/thumbData.ms", curDir, saveName);
+
+        HANDLE hThumb = CreateFileA(thumbPath, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+
+        if (hThumb != INVALID_HANDLE_VALUE)
+        {
+            pSaveInfo->thumbnailData = new BYTE[thumbSize];
+
+            DWORD bytesRead = 0;
+            BOOL res = ReadFile(hThumb, pSaveInfo->thumbnailData, thumbSize, &bytesRead, 0);
+
+            // If the read fails or is incomplete, clean up to prevent corrupted image data
+            if (!res || bytesRead != thumbSize)
+            {
+                delete[] pSaveInfo->thumbnailData;
+                pSaveInfo->thumbnailData = nullptr;
+            }
+
+            CloseHandle(hThumb);
+        }
+    }
+
     Func(lpParam, pSaveInfo->thumbnailData, pSaveInfo->metaData.thumbnailSize);
     return C4JStorage::ESaveGame_GetSaveThumbnail;
 }
@@ -230,14 +284,37 @@ void CSaveGame::GetSaveData(void *pvData, unsigned int *puiBytes)
     }
 }
 
+// @Patoke add
 bool CSaveGame::GetSaveUniqueNumber(INT *piVal)
 {
-    return false;
+    if (m_szSaveUniqueName[0] == '\0')
+    {
+        return 0;
+    }
+
+    int year, month, day, hour, minute;
+    sscanf(&m_szSaveUniqueName[4], "%02d%02d%02d%02d%02d", &year, &month, &day, &hour, &minute);
+
+    *piVal = 2678400 * year + 86400 * month + 3600 * day + 60 * hour + minute;
+
+    return true;
 }
 
+// @Patoke add
 bool CSaveGame::GetSaveUniqueFilename(char *pszName)
 {
-    return false;
+    if (m_szSaveUniqueName[0] == '\0')
+    {
+        return false;
+    }
+
+    memset(pszName, 0, 14);
+    for (int i = 0; i < 12; i++)
+    {
+        pszName[i] = m_szSaveUniqueName[i + 2];
+    }
+
+    return true;
 }
 
 void CSaveGame::SetSaveTitle(LPCWSTR pwchDefaultSaveName)
@@ -259,9 +336,118 @@ PVOID CSaveGame::AllocateSaveData(unsigned int uiBytes)
     return m_pSaveData;
 }
 
+// @Patoke add
 void CSaveGame::SetSaveImages(PBYTE pbThumbnail, DWORD dwThumbnailBytes, PBYTE pbImage, DWORD dwImageBytes, PBYTE pbTextData, DWORD dwTextDataBytes)
 {
-    ;
+    if (this->m_pbThumbnailData)
+    {
+        free(this->m_pbThumbnailData);
+    }
+
+    this->m_pbImageData = pbImage;
+    this->m_uiImageSize = dwImageBytes;
+
+    DWORD dwNewThumbnailBytes = dwThumbnailBytes;
+    if (dwTextDataBytes > 0)
+    {
+        // add extra bytes to the allocation for the text chunk (4 bytes for size, 4 bytes for type, 4 bytes for checksum)
+        dwNewThumbnailBytes += dwTextDataBytes + 12;
+    }
+
+    // allocate the thumbnail
+    this->m_pbThumbnailData = static_cast<PBYTE>(malloc(dwNewThumbnailBytes));
+    this->m_uiThumbnailSize = dwNewThumbnailBytes;
+    memset(this->m_pbThumbnailData, 0, dwNewThumbnailBytes);
+
+    // copy original thumbnail data to new buffer
+    memcpy(this->m_pbThumbnailData, pbThumbnail, dwThumbnailBytes);
+
+    // inject text metadata into the thumbnail if it exists
+    if (dwTextDataBytes > 0)
+    {
+        this->AddTextFieldToPNG(reinterpret_cast<unsigned __int8 *>(this->m_pbThumbnailData), dwThumbnailBytes, pbTextData, dwTextDataBytes,
+                                dwNewThumbnailBytes);
+    }
+}
+
+// @Patoke add
+void CSaveGame::AddTextFieldToPNG(PBYTE pbImageData, DWORD dwImageBytes, PBYTE pbTextData, DWORD dwTextBytes, DWORD dwTotalSizeAllocated)
+{
+    if (dwImageBytes == 0)
+    {
+        return;
+    }
+
+    for (int j = 0; j < 8; ++j)
+    {
+        if (CSaveGame::szPNGHeader[j] != pbImageData[j])
+        {
+            return;
+        }
+    }
+
+    unsigned int offset = 8;
+    while (offset < dwImageBytes)
+    {
+        unsigned int chunkStart = offset;
+
+        unsigned int chunkLength = this->ReverseBytes(*reinterpret_cast<unsigned int *>(&pbImageData[offset]));
+        offset += 4;
+
+        unsigned int chunkType = this->ReverseBytes(*reinterpret_cast<unsigned int *>(&pbImageData[offset]));
+        offset += 4;
+
+        if (chunkType == 'IEND')
+        {
+            offset = chunkStart;
+
+            // write the tEXt chunk before the IEND chunk
+            *reinterpret_cast<unsigned int *>(&pbImageData[offset]) = this->ReverseBytes(static_cast<unsigned int>(dwTextBytes));
+            offset += 4;
+
+            unsigned __int8 *textTypeStart = &pbImageData[offset];
+            *reinterpret_cast<unsigned int *>(&pbImageData[offset]) = this->ReverseBytes('tEXt');
+            offset += 4;
+
+            memcpy(&pbImageData[offset], pbTextData, dwTextBytes);
+            offset += dwTextBytes;
+
+            unsigned int textCrc = InternalStorageManager.CRC(textTypeStart, dwTextBytes + 4);
+            *reinterpret_cast<unsigned int *>(&pbImageData[offset]) = this->ReverseBytes(textCrc);
+            offset += 4;
+
+            // add a new IEND chunk
+            *reinterpret_cast<unsigned int *>(&pbImageData[offset]) = 0;
+            offset += 4;
+
+            unsigned __int8 *iendTypeStart = &pbImageData[offset];
+            *reinterpret_cast<unsigned int *>(&pbImageData[offset]) = this->ReverseBytes('IEND');
+            offset += 4;
+
+            unsigned int iendCrc = InternalStorageManager.CRC(iendTypeStart, 4);
+            *reinterpret_cast<unsigned int *>(&pbImageData[offset]) = this->ReverseBytes(iendCrc);
+            offset += 4;
+
+            assert("uiCount <= dwTotalSizeAllocated");
+
+            break;
+        }
+        else
+        {
+            // not 'IEND' chunk, continue to next chunk
+            offset += chunkLength + 4;
+        }
+    }
+}
+
+// @Patoke add
+unsigned int CSaveGame::ReverseBytes(unsigned int uiValue)
+{
+    unsigned int uiReturn = 0;
+
+    uiReturn = (uiValue << 24) | ((uiValue << 8) & 0x00FF0000) | ((uiValue >> 8) & 0x0000FF00) | (uiValue >> 24);
+
+    return uiReturn;
 }
 
 C4JStorage::ESaveGameState CSaveGame::SaveSaveData(int (*Func)(LPVOID, const bool), LPVOID lpParam)
@@ -269,6 +455,8 @@ C4JStorage::ESaveGameState CSaveGame::SaveSaveData(int (*Func)(LPVOID, const boo
     char dirName[256];
     char curDir[256];
     char fileName[280];
+    char thumbName[280];
+
     GetCurrentDirectoryA(sizeof(curDir), curDir);
     sprintf(dirName, "%s/Windows64/GameHDD/%s", curDir, m_szSaveUniqueName);
     CreateDirectoryA(dirName, 0);
@@ -281,6 +469,20 @@ C4JStorage::ESaveGameState CSaveGame::SaveSaveData(int (*Func)(LPVOID, const boo
     _ASSERT(res && bytesWritten == m_uiSaveSize);
 
     CloseHandle(h);
+
+    // @Patoke add
+    if (this->m_pbThumbnailData != nullptr && this->m_uiThumbnailSize > 0)
+    {
+        sprintf(thumbName, "%s/thumbData.png", dirName);
+
+        HANDLE hThumb = CreateFileA(thumbName, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+
+        DWORD thumbBytesWritten = 0;
+        BOOL thumbRes = WriteFile(hThumb, this->m_pbThumbnailData, this->m_uiThumbnailSize, &thumbBytesWritten, 0);
+        _ASSERT(thumbRes && thumbBytesWritten == this->m_uiThumbnailSize);
+
+        CloseHandle(hThumb);
+    }
 
     Func(lpParam, true);
 

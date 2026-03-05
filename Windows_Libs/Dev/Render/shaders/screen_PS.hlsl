@@ -1,4 +1,3 @@
-#pragma once
 /*
 MIT License
 
@@ -22,18 +21,20 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+cbuffer cbuff : register(b4)
+{
+    float4 clearColour;
+};
 
-// Vertex shaders
-#include "VS_Compressed.h"
-#include "VS_PF3_TF2_CB4_NB4_XW1.h"
-#include "VS_PF3_TF2_CB4_NB4_XW1_LIGHTING.h"
-#include "VS_PF3_TF2_CB4_NB4_XW1_TEXGEN.h"
-#include "VS_ScreenClear.h"
-#include "VS_ScreenSpace.h"
+SamplerState screen_sampler_s : register(s0);
+Texture2D<float4> screen_texture : register(t0);
 
-// Pixel shaders
-#include "PS_Standard.h"
-#include "PS_TextureProjection.h"
-#include "PS_ForceLOD.h"
-#include "PS_ScreenSpace.h"
-#include "PS_ScreenClear.h"
+float4 PS_ScreenSpace(float4 position : SV_POSITION, float2 texcoord : TEXCOORD0) : SV_TARGET
+{
+    return screen_texture.Sample(screen_sampler_s, texcoord);
+}
+
+float4 PS_ScreenClear(float4 position : SV_POSITION) : SV_TARGET
+{
+    return clearColour;
+}

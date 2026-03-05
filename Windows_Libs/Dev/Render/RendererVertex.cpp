@@ -22,20 +22,27 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "stdafx.h"
 #include "Renderer.h"
+#include "stdafx.h"
+
+D3D11_PRIMITIVE_TOPOLOGY Renderer::m_Topologies[C4JRender::PRIMITIVE_TYPE_COUNT] = {
+    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
+    D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST, D3D11_PRIMITIVE_TOPOLOGY_LINELIST,      D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP,
+};
+
+static const unsigned int kVertexBufferSize = 0x100000;
 
 void Renderer::DrawVertexBuffer(C4JRender::ePrimitiveType PrimitiveType, int count, ID3D11Buffer *buffer, C4JRender::eVertexType vType,
                                 C4JRender::ePixelShaderType psType)
 {
-    PROFILER_SCOPE("Renderer::DrawVertexBuffer", "DrawVertexBuffer", MP_RED2)
+    PROFILER_SCOPE("Renderer::DrawVertexBuffer", "DrawVertexBuffer", MP_RED2);
     Renderer::Context &c = getContext();
     ID3D11DeviceContext *d3d11 = c.m_pDeviceContext;
 
     int drawCount = count;
     bool indexed = false;
 
-    PROFILER_SCOPE("Renderer::DrawVertexBuffer", "DrawVertexSetup", MP_RED2)
+    PROFILER_SCOPE("Renderer::DrawVertexBuffer", "DrawVertexSetup", MP_RED2);
     DrawVertexSetup(vType, psType, PrimitiveType, &drawCount, &indexed);
     StateUpdate();
 
@@ -51,7 +58,7 @@ void Renderer::DrawVertexBuffer(C4JRender::ePrimitiveType PrimitiveType, int cou
 void Renderer::DrawVertexSetup(C4JRender::eVertexType vType, C4JRender::ePixelShaderType psType, C4JRender::ePrimitiveType PrimitiveType, int *count,
                                bool *indexed)
 {
-    PROFILER_SCOPE("Renderer::DrawVertexSetup", "DrawVertexSetup", MP_RED2)
+    PROFILER_SCOPE("Renderer::DrawVertexSetup", "DrawVertexSetup", MP_RED2);
     Renderer::Context &c = getContext();
     ID3D11DeviceContext *d3d11 = c.m_pDeviceContext;
 
@@ -62,7 +69,7 @@ void Renderer::DrawVertexSetup(C4JRender::eVertexType vType, C4JRender::ePixelSh
     if (effectiveVertexType != activeVertexType)
     {
         d3d11->VSSetShader(vertexShaderTable[effectiveVertexType], NULL, 0);
-        d3d11->IASetInputLayout(inputLayoutTable[effectiveVertexType]);
+        d3d11->IASetInputLayout(g_vertexInputLayout[effectiveVertexType]);
         activeVertexType = effectiveVertexType;
     }
 
@@ -103,7 +110,7 @@ void Renderer::DrawVertexSetup(C4JRender::eVertexType vType, C4JRender::ePixelSh
     UpdateLightingState();
     UpdateTexGenState();
 
-    d3d11->IASetPrimitiveTopology(g_topologies[PrimitiveType]);
+    d3d11->IASetPrimitiveTopology(m_Topologies[PrimitiveType]);
 
     if (PrimitiveType == C4JRender::PRIMITIVE_TYPE_QUAD_LIST)
     {
@@ -128,7 +135,7 @@ void Renderer::DrawVertexSetup(C4JRender::eVertexType vType, C4JRender::ePixelSh
 void Renderer::DrawVertices(C4JRender::ePrimitiveType PrimitiveType, int count, void *vertices, C4JRender::eVertexType vType,
                             C4JRender::ePixelShaderType psType)
 {
-    PROFILER_SCOPE("Renderer::DrawVertices", "DrawVertices", MP_RED2)
+    PROFILER_SCOPE("Renderer::DrawVertices", "DrawVertices", MP_RED2);
     Renderer::Context &c = getContext();
     ID3D11DeviceContext *d3d11 = c.m_pDeviceContext;
     Renderer::CommandBuffer *commandBuffer = c.commandBuffer;
@@ -149,16 +156,17 @@ void Renderer::DrawVertices(C4JRender::ePrimitiveType PrimitiveType, int count, 
     int drawCount = count;
     bool indexed = false;
 
-    PROFILER_SCOPE("Renderer::DrawVertices", "DrawVertexSetup", MP_RED2)
+    PROFILER_SCOPE("Renderer::DrawVertices", "DrawVertexSetup", MP_RED2);
     DrawVertexSetup(vType, psType, PrimitiveType, &drawCount, &indexed);
 
     const UINT stride = vertexStrideTable[vType];
     const UINT vertexBytes = stride * static_cast<UINT>(count);
 
-    assert(vertexBytes <= Context::VERTEX_BUFFER_SIZE);
+    assert(vertexBytes <= kVertexBufferSize);
 
-    if (c.dynamicVertexOffset + vertexBytes > Context::VERTEX_BUFFER_SIZE)
-        c.dynamicVertexOffset = 0;
+    UINT vertexOffset = c.dynamicVertexOffset;
+    if (vertexOffset + vertexBytes > kVertexBufferSize)
+        vertexOffset = 0;
 
     D3D11_MAPPED_SUBRESOURCE mapped = {};
     const D3D11_MAP mapType = c.dynamicVertexOffset == 0 ? D3D11_MAP_WRITE_DISCARD : D3D11_MAP_WRITE_NO_OVERWRITE;
