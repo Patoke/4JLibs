@@ -22,12 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "stdafx.h"
 #include "Renderer.h"
+#include "stdafx.h"
 
 #include <cstring>
 #include <limits>
-
 
 ID3D11BlendState *Renderer::GetManagedBlendState()
 {
@@ -48,7 +47,6 @@ ID3D11BlendState *Renderer::GetManagedBlendState()
     return state;
 }
 
-
 ID3D11DepthStencilState *Renderer::GetManagedDepthStencilState()
 {
     PROFILER_SCOPE("Renderer::GetManagedBlendState", "GetManagedDepthStencilState", MP_ORCHID1);
@@ -66,7 +64,6 @@ ID3D11DepthStencilState *Renderer::GetManagedDepthStencilState()
     managedDepthStencilStates.emplace(key, state);
     return state;
 }
-
 
 ID3D11RasterizerState *Renderer::GetManagedRasterizerState()
 {
@@ -86,7 +83,6 @@ ID3D11RasterizerState *Renderer::GetManagedRasterizerState()
     managedRasterizerStates.emplace(key, state);
     return state;
 }
-
 
 ID3D11SamplerState *Renderer::GetManagedSamplerState()
 {
@@ -125,7 +121,6 @@ ID3D11SamplerState *Renderer::GetManagedSamplerState()
     return state;
 }
 
-
 void Renderer::StateSetAlphaFunc(int, float param)
 {
     Context &c = getContext();
@@ -137,7 +132,6 @@ void Renderer::StateSetAlphaFunc(int, float param)
     std::memcpy(mapped.pData, alpha, sizeof(alpha));
     c.m_pDeviceContext->Unmap(c.m_alphaTestBuffer, 0);
 }
-
 
 void Renderer::StateSetAlphaTestEnable(bool enable)
 {
@@ -151,7 +145,6 @@ void Renderer::StateSetAlphaTestEnable(bool enable)
     c.m_pDeviceContext->Unmap(c.m_alphaTestBuffer, 0);
 }
 
-
 void Renderer::StateSetBlendEnable(bool enable)
 {
     Context &c = getContext();
@@ -164,7 +157,6 @@ void Renderer::StateSetBlendEnable(bool enable)
     c.blendDesc.RenderTarget[0].BlendEnable = enable;
     c.m_pDeviceContext->OMSetBlendState(GetManagedBlendState(), c.blendFactor, 0xFFFFFFFF);
 }
-
 
 void Renderer::StateSetBlendFactor(unsigned int colour)
 {
@@ -183,7 +175,6 @@ void Renderer::StateSetBlendFactor(unsigned int colour)
     c.m_pDeviceContext->OMSetBlendState(GetManagedBlendState(), c.blendFactor, 0xFFFFFFFF);
 }
 
-
 void Renderer::StateSetBlendFunc(int src, int dst)
 {
     Context &c = getContext();
@@ -197,7 +188,6 @@ void Renderer::StateSetBlendFunc(int src, int dst)
     c.blendDesc.RenderTarget[0].DestBlend = static_cast<D3D11_BLEND>(dst);
     c.m_pDeviceContext->OMSetBlendState(GetManagedBlendState(), c.blendFactor, 0xFFFFFFFF);
 }
-
 
 void Renderer::StateSetColour(float r, float g, float b, float a)
 {
@@ -217,7 +207,6 @@ void Renderer::StateSetColour(float r, float g, float b, float a)
     d3d11->Unmap(c.m_tintColorBuffer, 0);
 }
 
-
 void Renderer::StateSetDepthFunc(int func)
 {
     Context &c = getContext();
@@ -230,7 +219,6 @@ void Renderer::StateSetDepthFunc(int func)
     c.depthStencilDesc.DepthFunc = static_cast<D3D11_COMPARISON_FUNC>(func);
     c.m_pDeviceContext->OMSetDepthStencilState(GetManagedDepthStencilState(), 0);
 }
-
 
 void Renderer::StateSetDepthMask(bool enable)
 {
@@ -246,7 +234,6 @@ void Renderer::StateSetDepthMask(bool enable)
     c.depthWriteEnabled = enable;
 }
 
-
 void Renderer::StateSetDepthSlopeAndBias(float slope, float bias)
 {
     Context &c = getContext();
@@ -256,7 +243,6 @@ void Renderer::StateSetDepthSlopeAndBias(float slope, float bias)
     c.rasterizerDesc.SlopeScaledDepthBias = slope * scale;
     c.m_pDeviceContext->RSSetState(GetManagedRasterizerState());
 }
-
 
 void Renderer::StateSetDepthTestEnable(bool enable)
 {
@@ -272,9 +258,7 @@ void Renderer::StateSetDepthTestEnable(bool enable)
     c.depthTestEnabled = enable;
 }
 
-
 void Renderer::StateSetEnableViewportClipPlanes(bool) {}
-
 
 void Renderer::StateSetFaceCull(bool enable)
 {
@@ -290,7 +274,6 @@ void Renderer::StateSetFaceCull(bool enable)
     c.faceCullEnabled = enable;
 }
 
-
 void Renderer::StateSetFaceCullCW(bool enable)
 {
     Context &c = getContext();
@@ -302,7 +285,6 @@ void Renderer::StateSetFaceCullCW(bool enable)
     c.m_pDeviceContext->RSSetState(GetManagedRasterizerState());
 }
 
-
 void Renderer::StateSetFogColour(float red, float green, float blue)
 {
     Context &c = getContext();
@@ -311,13 +293,11 @@ void Renderer::StateSetFogColour(float red, float green, float blue)
     c.fogColourGreen = green;
 }
 
-
 void Renderer::StateSetFogDensity(float density)
 {
     Context &c = getContext();
     c.fogDensity = density;
 }
-
 
 void Renderer::StateSetFogEnable(bool enable)
 {
@@ -325,13 +305,11 @@ void Renderer::StateSetFogEnable(bool enable)
     c.fogEnabled = enable;
 }
 
-
 void Renderer::StateSetFogFarDistance(float dist)
 {
     Context &c = getContext();
     c.fogFarDistance = dist;
 }
-
 
 void Renderer::StateSetFogMode(int mode)
 {
@@ -339,20 +317,17 @@ void Renderer::StateSetFogMode(int mode)
     c.fogMode = mode;
 }
 
-
 void Renderer::StateSetFogNearDistance(float dist)
 {
     Context &c = getContext();
     c.fogNearDistance = dist;
 }
 
-
 void Renderer::StateSetForceLOD(int LOD)
 {
     Context &c = getContext();
     c.forcedLOD = LOD;
 }
-
 
 void Renderer::StateSetLightAmbientColour(float red, float green, float blue)
 {
@@ -369,7 +344,6 @@ void Renderer::StateSetLightAmbientColour(float red, float green, float blue)
     c.lightAmbientColour.w = 1.0f;
     c.lightingDirty = true;
 }
-
 
 void Renderer::StateSetLightColour(int light, float red, float green, float blue)
 {
@@ -389,7 +363,6 @@ void Renderer::StateSetLightColour(int light, float red, float green, float blue
     c.lightColour[light].w = 1.0f;
     c.lightingDirty = true;
 }
-
 
 void Renderer::StateSetLightDirection(int light, float x, float y, float z)
 {
@@ -413,7 +386,6 @@ void Renderer::StateSetLightDirection(int light, float x, float y, float z)
     c.lightingDirty = true;
 }
 
-
 void Renderer::StateSetLightEnable(int light, bool enable)
 {
     if (light >= 2)
@@ -430,7 +402,6 @@ void Renderer::StateSetLightEnable(int light, bool enable)
     c.lightingDirty = true;
 }
 
-
 void Renderer::StateSetLightingEnable(bool enable)
 {
     Context &c = getContext();
@@ -443,9 +414,7 @@ void Renderer::StateSetLightingEnable(bool enable)
     c.lightingEnabled = enable;
 }
 
-
 void Renderer::StateSetLineWidth(float) {}
-
 
 void Renderer::StateSetStencil(D3D11_COMPARISON_FUNC function, uint8_t stencil_ref, uint8_t stencil_func_mask, uint8_t stencil_write_mask)
 {
@@ -461,9 +430,9 @@ void Renderer::StateSetStencil(D3D11_COMPARISON_FUNC function, uint8_t stencil_r
     ID3D11DepthStencilState *state = NULL;
     m_pDevice->CreateDepthStencilState(&desc, &state);
     m_pDeviceContext->OMSetDepthStencilState(state, stencil_ref);
-    if (state != NULL) state->Release();
+    if (state != NULL)
+        state->Release();
 }
-
 
 void Renderer::StateSetTexGenCol(int col, float x, float y, float z, float w, bool eyeSpace)
 {
@@ -500,7 +469,6 @@ void Renderer::StateSetTexGenCol(int col, float x, float y, float z, float w, bo
     inactive[col + 12] = 0.0f;
 }
 
-
 void Renderer::StateSetVertexTextureUV(float u, float v)
 {
     Context &c = getContext();
@@ -511,7 +479,6 @@ void Renderer::StateSetVertexTextureUV(float u, float v)
     std::memcpy(mapped.pData, texgen, sizeof(texgen));
     c.m_pDeviceContext->Unmap(c.m_vertexTexcoordBuffer, 0);
 }
-
 
 void Renderer::StateSetViewport(C4JRender::eViewportType viewportType)
 {
@@ -580,7 +547,6 @@ void Renderer::StateSetViewport(C4JRender::eViewportType viewportType)
     m_pDeviceContext->OMSetRenderTargets(1, &renderTargetView, depthStencilView);
 }
 
-
 void Renderer::StateSetWriteEnable(bool red, bool green, bool blue, bool alpha)
 {
     Context &c = getContext();
@@ -594,7 +560,6 @@ void Renderer::StateSetWriteEnable(bool red, bool green, bool blue, bool alpha)
     c.blendDesc.RenderTarget[0].RenderTargetWriteMask = mask;
     c.m_pDeviceContext->OMSetBlendState(GetManagedBlendState(), c.blendFactor, 0xFFFFFFFF);
 }
-
 
 void Renderer::StateUpdate()
 {
@@ -640,7 +605,6 @@ void Renderer::UpdateFogState()
     d3d11->Unmap(c.m_fogColourBuffer, 0);
 }
 
-
 void Renderer::UpdateLightingState()
 {
     PROFILER_SCOPE("Renderer::UpdateLightingState", "UpdateLightingState", MP_ORCHID1);
@@ -671,7 +635,6 @@ void Renderer::UpdateLightingState()
     c.lightingDirty = false;
 }
 
-
 void Renderer::UpdateTexGenState()
 {
     PROFILER_SCOPE("Renderer::UpdateTexGenState", "UpdateTexGenState", MP_ORCHID1);
@@ -682,6 +645,5 @@ void Renderer::UpdateTexGenState()
     c.m_pDeviceContext->Unmap(c.m_texGenMatricesBuffer, 0);
     std::memcpy(mapped.pData, c.texGenMatrices, sizeof(c.texGenMatrices));
 }
-
 
 void Renderer::UpdateViewportState() {}

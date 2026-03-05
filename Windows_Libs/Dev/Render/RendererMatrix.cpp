@@ -22,8 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "stdafx.h"
 #include "Renderer.h"
+#include "stdafx.h"
 
 #include <cstring>
 
@@ -77,7 +77,7 @@ void Renderer::MatrixPop()
 void Renderer::MatrixPush()
 {
     Context &c = getContext();
-    
+
     assert(c.stackPos[c.stackType] < (STACK_SIZE - 1));
 
     const int mode = c.stackType;

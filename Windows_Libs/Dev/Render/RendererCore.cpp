@@ -22,28 +22,28 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "stdafx.h"
-#include "Renderer.h"
 #include "CompiledShaders.h"
+#include "Renderer.h"
+#include "stdafx.h"
 
 DWORD Renderer::tlsIdx = TlsAlloc();
 
 _RTL_CRITICAL_SECTION Renderer::totalAllocCS = {};
 int Renderer::totalAlloc = 0;
 
-DWORD Renderer::s_auiWidths[]  = { 1920, 512, 256, 128, 64, 0 };
-DWORD Renderer::s_auiHeights[] = { 1080, 512, 256, 128, 64 };
+DWORD Renderer::s_auiWidths[] = {1920, 512, 256, 128, 64, 0};
+DWORD Renderer::s_auiHeights[] = {1080, 512, 256, 128, 64};
 
 Renderer InternalRenderManager;
 
 const float Renderer::PI = 3.14159274f;
 
 D3D11_INPUT_ELEMENT_DESC g_vertex_PTN_Elements_PF3_TF2_CB4_NB4_XW1[] = {
-    {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0},
-    {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
-    {"COLOR",    0, DXGI_FORMAT_R8G8B8A8_UNORM,  0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0},
-    {"NORMAL",   0, DXGI_FORMAT_R8G8B8A8_SNORM,  0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0},
-    {"TEXCOORD", 1, DXGI_FORMAT_R16G16_SINT,     0, 28, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    {"COLOR", 0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    {"NORMAL", 0, DXGI_FORMAT_R8G8B8A8_SNORM, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    {"TEXCOORD", 1, DXGI_FORMAT_R16G16_SINT, 0, 28, D3D11_INPUT_PER_VERTEX_DATA, 0},
 };
 
 D3D11_INPUT_ELEMENT_DESC g_vertex_PTN_Elements_Compressed[] = {
@@ -56,57 +56,20 @@ static const unsigned int kScreenGrabWidth = 1920;
 static const unsigned int kScreenGrabHeight = 1080;
 static const unsigned int kThumbnailSize = 64;
 
-static const unsigned int g_vertexStrides[C4JRender::VERTEX_TYPE_COUNT] = { 32, 16, 32, 32 };
+static const unsigned int g_vertexStrides[C4JRender::VERTEX_TYPE_COUNT] = {32, 16, 32, 32};
 
 ID3D11InputLayout **g_vertexInputLayout;
 
-Renderer::Context::Context(ID3D11Device* device, ID3D11DeviceContext* deviceContext)
-    : m_pDeviceContext(deviceContext)
-    , userAnnotation(NULL)
-    , annotateDepth(0)
-    , stackType(0)
-    , textureIdx(0)
-    , faceCullEnabled(true)
-    , depthTestEnabled(true)
-    , depthWriteEnabled(true)
-    , alphaTestEnabled(false)
-    , alphaReference(1.0f)
-    , fogEnabled(false)
-    , fogNearDistance(0.0f)
-    , fogFarDistance(0.0f)
-    , fogDensity(0.0f)
-    , fogColourRed(0.0f)
-    , fogColourGreen(0.0f)
-    , fogColourBlue(0.0f)
-    , fogMode(0)
-    , lightingEnabled(false)
-    , lightingDirty(false)
-    , forcedLOD(-1)
-    , m_modelViewMatrix(NULL)
-    , m_localTransformMatrix(NULL)
-    , m_projectionMatrix(NULL)
-    , m_textureMatrix(NULL)
-    , m_vertexTexcoordBuffer(NULL)
-    , m_fogParamsBuffer(NULL)
-    , m_lightingStateBuffer(NULL)
-    , m_texGenMatricesBuffer(NULL)
-    , m_compressedTranslationBuffer(NULL)
-    , m_thumbnailBoundsBuffer(NULL)
-    , m_tintColorBuffer(NULL)
-    , m_fogColourBuffer(NULL)
-    , m_unkColorBuffer(NULL)
-    , m_alphaTestBuffer(NULL)
-    , m_clearColorBuffer(NULL)
-    , m_forcedLODBuffer(NULL)
-    , dynamicVertexBase(0)
-    , dynamicVertexOffset(0)
-    , dynamicVertexBuffer(NULL)
-    , commandBuffer(NULL)
-    , recordingBufferIndex(0)
-    , recordingVertexType(0)
-    , recordingPrimitiveType(0)
-    , deferredModeEnabled(false)
-    , deferredBuffers()
+Renderer::Context::Context(ID3D11Device *device, ID3D11DeviceContext *deviceContext)
+    : m_pDeviceContext(deviceContext), userAnnotation(NULL), annotateDepth(0), stackType(0), textureIdx(0), faceCullEnabled(true),
+      depthTestEnabled(true), depthWriteEnabled(true), alphaTestEnabled(false), alphaReference(1.0f), fogEnabled(false), fogNearDistance(0.0f),
+      fogFarDistance(0.0f), fogDensity(0.0f), fogColourRed(0.0f), fogColourGreen(0.0f), fogColourBlue(0.0f), fogMode(0), lightingEnabled(false),
+      lightingDirty(false), forcedLOD(-1), m_modelViewMatrix(NULL), m_localTransformMatrix(NULL), m_projectionMatrix(NULL), m_textureMatrix(NULL),
+      m_vertexTexcoordBuffer(NULL), m_fogParamsBuffer(NULL), m_lightingStateBuffer(NULL), m_texGenMatricesBuffer(NULL),
+      m_compressedTranslationBuffer(NULL), m_thumbnailBoundsBuffer(NULL), m_tintColorBuffer(NULL), m_fogColourBuffer(NULL), m_unkColorBuffer(NULL),
+      m_alphaTestBuffer(NULL), m_clearColorBuffer(NULL), m_forcedLODBuffer(NULL), dynamicVertexBase(0), dynamicVertexOffset(0),
+      dynamicVertexBuffer(NULL), commandBuffer(NULL), recordingBufferIndex(0), recordingVertexType(0), recordingPrimitiveType(0),
+      deferredModeEnabled(false), deferredBuffers()
 {
     deviceContext->QueryInterface(IID_PPV_ARGS(&userAnnotation));
     std::memset(matrixStacks, 0, sizeof(matrixStacks));
@@ -248,7 +211,7 @@ void Renderer::BeginConditionalSurvey(int) {}
 
 void Renderer::BeginEvent(LPCWSTR eventName)
 {
-    Renderer::Context *c = reinterpret_cast<Renderer::Context*>(TlsGetValue(Renderer::tlsIdx));
+    Renderer::Context *c = static_cast<Renderer::Context *>(TlsGetValue(Renderer::tlsIdx));
     if (c && c->m_pDeviceContext->GetType() != D3D11_DEVICE_CONTEXT_DEFERRED)
     {
         c->userAnnotation->BeginEvent(eventName);
@@ -330,25 +293,25 @@ void Renderer::CaptureThumbnail(ImageFileBuffer *pngOut)
     float aspectRatio = IsWidescreen() ? (16.0f / 9.0f) : (4.0f / 3.0f);
 
     right *= aspectRatio;
-    left  *= aspectRatio;
+    left *= aspectRatio;
 
-    float width  = right - left;
+    float width = right - left;
     float height = top - bottom;
 
     if (height > width)
     {
         float diff = (height - width) * 0.5f;
         bottom += diff;
-        top    -= diff;
+        top -= diff;
     }
     else
     {
         float diff = (width - height) * 0.5f;
-        left  += diff;
+        left += diff;
         right -= diff;
     }
 
-    left  /= aspectRatio;
+    left /= aspectRatio;
     right /= aspectRatio;
 
     ID3D11BlendState *blendState = NULL;
@@ -432,7 +395,7 @@ void Renderer::CaptureThumbnail(ImageFileBuffer *pngOut)
         D3D11_MAPPED_SUBRESOURCE mapped = {};
         c.m_pDeviceContext->Map(c.m_thumbnailBoundsBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
 
-        float* constants = static_cast<float*>(mapped.pData);
+        float *constants = static_cast<float *>(mapped.pData);
         if (i == 0)
         {
             constants[0] = left;
@@ -469,14 +432,14 @@ void Renderer::CaptureThumbnail(ImageFileBuffer *pngOut)
 
         D3D11_MAPPED_SUBRESOURCE mapped = {};
         c.m_pDeviceContext->Map(stagingTexture, 0, D3D11_MAP_READ_WRITE, 0, &mapped);
-        const unsigned char* src = static_cast<const unsigned char*>(mapped.pData);
-        unsigned char* dst = linearData;
+        const unsigned char *src = static_cast<const unsigned char *>(mapped.pData);
+        unsigned char *dst = linearData;
 
         for (UINT y = 0; y < kThumbnailSize; ++y)
         {
             std::memcpy(dst, src, stride);
 
-            unsigned char* alpha = dst + 3;
+            unsigned char *alpha = dst + 3;
             for (UINT x = 0; x < kThumbnailSize; ++x)
             {
                 *alpha = 0xFF;
@@ -531,13 +494,13 @@ void Renderer::Clear(int flags, D3D11_RECT *)
 {
     PROFILER_SCOPE("Renderer::Clear", "Clear", MP_MAGENTA);
 
-    Renderer::Context *c = reinterpret_cast<Renderer::Context*>(TlsGetValue(Renderer::tlsIdx));
-    unsigned char clearFlags = static_cast<unsigned char>(flags);
+    Renderer::Context *c = static_cast<Renderer::Context *>(TlsGetValue(Renderer::tlsIdx));
+    const int clearFlags = flags;
 
     ID3D11BlendState *blendState = NULL;
     ID3D11DepthStencilState *depthState = NULL;
     ID3D11RasterizerState *rasterizerState = NULL;
-    
+
     PROFILER_SCOPE("Renderer::Clear", "Blend", MP_MAGENTA);
     D3D11_BLEND_DESC blendDesc = {};
     blendDesc.AlphaToCoverageEnable = false;
@@ -609,7 +572,7 @@ void Renderer::Clear(int flags, D3D11_RECT *)
     m_pDevice->CreateRasterizerState(&c->rasterizerDesc, &restoredRasterizerState);
     m_pDeviceContext->RSSetState(restoredRasterizerState);
     restoredRasterizerState->Release();
-   
+
     activeVertexType = -1;
     activePixelType = -1;
 }
@@ -622,23 +585,17 @@ void Renderer::ConvertLinearToPng(ImageFileBuffer *pngOut, unsigned char *linear
     void *outputBuffer = std::malloc(outputCapacity);
     int outputLength = 0;
 
-    SaveTextureDataToMemory(
-        outputBuffer, 
-        static_cast<int>(outputCapacity), 
-        &outputLength, 
-        static_cast<int>(width), 
-        static_cast<int>(height),
-        reinterpret_cast<int *>(linearData)
-    );
-   
+    SaveTextureDataToMemory(outputBuffer, static_cast<int>(outputCapacity), &outputLength, static_cast<int>(width), static_cast<int>(height),
+                            reinterpret_cast<int *>(linearData));
+
     pngOut->m_type = ImageFileBuffer::e_typePNG;
     pngOut->m_pBuffer = outputBuffer;
     pngOut->m_bufferSize = outputLength;
 }
 
-void Renderer::DoScreenGrabOnNextPresent() 
-{ 
-    m_bShouldScreenGrabNextFrame = true; 
+void Renderer::DoScreenGrabOnNextPresent()
+{
+    m_bShouldScreenGrabNextFrame = true;
 }
 
 void Renderer::EndConditionalRendering() {}
@@ -646,7 +603,7 @@ void Renderer::EndConditionalSurvey() {}
 
 void Renderer::EndEvent()
 {
-    Renderer::Context *c = reinterpret_cast<Renderer::Context *>(TlsGetValue(Renderer::tlsIdx));
+    Renderer::Context *c = static_cast<Renderer::Context *>(TlsGetValue(Renderer::tlsIdx));
     if (c && c->m_pDeviceContext->GetType() != D3D11_DEVICE_CONTEXT_DEFERRED)
     {
         c->userAnnotation->EndEvent();
@@ -864,7 +821,7 @@ void Renderer::Present()
 
             D3D11_MAPPED_SUBRESOURCE mapped = {};
             m_pDeviceContext->Map(stagingTexture, 0, D3D11_MAP_READ_WRITE, 0, &mapped);
-            const unsigned char* src = reinterpret_cast<const unsigned char*>(mapped.pData);
+            const unsigned char *src = static_cast<const unsigned char *>(mapped.pData);
 
             for (UINT y = 0; y < kScreenGrabHeight; ++y)
             {
@@ -886,7 +843,7 @@ void Renderer::Present()
         D3DXIMAGE_INFO info;
         info.Width = kScreenGrabWidth;
         info.Height = kScreenGrabHeight;
-        SaveTextureData(fileName, &info, reinterpret_cast<int*>(linearData));
+        SaveTextureData(fileName, &info, reinterpret_cast<int *>(linearData));
 
         delete[] linearData;
 
@@ -907,7 +864,7 @@ void Renderer::SetClearColour(const float colourRGBA[4])
     for (int i = 0; i < 4; ++i)
         m_fClearColor[i] = colourRGBA[i];
 
-    Renderer::Context *c = reinterpret_cast<Renderer::Context*>(TlsGetValue(Renderer::tlsIdx));
+    Renderer::Context *c = static_cast<Renderer::Context *>(TlsGetValue(Renderer::tlsIdx));
     if (c)
     {
         D3D11_MAPPED_SUBRESOURCE mapped = {};
@@ -926,23 +883,33 @@ void Renderer::SetupShaders()
     g_vertexInputLayout = new ID3D11InputLayout *[C4JRender::VERTEX_TYPE_COUNT];
     pixelShaderTable = new ID3D11PixelShader *[C4JRender::PIXEL_SHADER_COUNT];
 
-    m_pDevice->CreateVertexShader(g_main_VS_PF3_TF2_CB4_NB4_XW1, sizeof(g_main_VS_PF3_TF2_CB4_NB4_XW1), NULL, &vertexShaderTable[C4JRender::VERTEX_TYPE_PF3_TF2_CB4_NB4_XW1]);
+    m_pDevice->CreateVertexShader(g_main_VS_PF3_TF2_CB4_NB4_XW1, sizeof(g_main_VS_PF3_TF2_CB4_NB4_XW1), NULL,
+                                  &vertexShaderTable[C4JRender::VERTEX_TYPE_PF3_TF2_CB4_NB4_XW1]);
     m_pDevice->CreateVertexShader(g_main_VS_Compressed, sizeof(g_main_VS_Compressed), NULL, &vertexShaderTable[C4JRender::VERTEX_TYPE_COMPRESSED]);
-    m_pDevice->CreateVertexShader(g_main_VS_PF3_TF2_CB4_NB4_XW1_LIGHTING, sizeof(g_main_VS_PF3_TF2_CB4_NB4_XW1_LIGHTING), NULL, &vertexShaderTable[C4JRender::VERTEX_TYPE_PF3_TF2_CB4_NB4_XW1_LIT]);
-    m_pDevice->CreateVertexShader(g_main_VS_PF3_TF2_CB4_NB4_XW1_TEXGEN, sizeof(g_main_VS_PF3_TF2_CB4_NB4_XW1_TEXGEN), NULL, &vertexShaderTable[C4JRender::VERTEX_TYPE_PF3_TF2_CB4_NB4_XW1_TEXGEN]);
+    m_pDevice->CreateVertexShader(g_main_VS_PF3_TF2_CB4_NB4_XW1_LIGHTING, sizeof(g_main_VS_PF3_TF2_CB4_NB4_XW1_LIGHTING), NULL,
+                                  &vertexShaderTable[C4JRender::VERTEX_TYPE_PF3_TF2_CB4_NB4_XW1_LIT]);
+    m_pDevice->CreateVertexShader(g_main_VS_PF3_TF2_CB4_NB4_XW1_TEXGEN, sizeof(g_main_VS_PF3_TF2_CB4_NB4_XW1_TEXGEN), NULL,
+                                  &vertexShaderTable[C4JRender::VERTEX_TYPE_PF3_TF2_CB4_NB4_XW1_TEXGEN]);
     m_pDevice->CreateVertexShader(g_main_VS_ScreenSpace, sizeof(g_main_VS_ScreenSpace), NULL, &screenSpaceVertexShader);
     m_pDevice->CreateVertexShader(g_main_VS_ScreenClear, sizeof(g_main_VS_ScreenClear), NULL, &screenClearVertexShader);
 
     m_pDevice->CreatePixelShader(g_main_PS_Standard, sizeof(g_main_PS_Standard), NULL, &pixelShaderTable[C4JRender::PIXEL_SHADER_TYPE_STANDARD]);
-    m_pDevice->CreatePixelShader(g_main_PS_TextureProjection, sizeof(g_main_PS_TextureProjection), NULL, &pixelShaderTable[C4JRender::PIXEL_SHADER_TYPE_PROJECTION]);
+    m_pDevice->CreatePixelShader(g_main_PS_TextureProjection, sizeof(g_main_PS_TextureProjection), NULL,
+                                 &pixelShaderTable[C4JRender::PIXEL_SHADER_TYPE_PROJECTION]);
     m_pDevice->CreatePixelShader(g_main_PS_ForceLOD, sizeof(g_main_PS_ForceLOD), NULL, &pixelShaderTable[C4JRender::PIXEL_SHADER_TYPE_FORCELOD]);
     m_pDevice->CreatePixelShader(g_main_PS_ScreenSpace, sizeof(g_main_PS_ScreenSpace), NULL, &screenSpacePixelShader);
     m_pDevice->CreatePixelShader(g_main_PS_ScreenClear, sizeof(g_main_PS_ScreenClear), NULL, &screenClearPixelShader);
 
-    m_pDevice->CreateInputLayout(g_vertex_PTN_Elements_PF3_TF2_CB4_NB4_XW1, 5, g_main_VS_PF3_TF2_CB4_NB4_XW1, sizeof(g_main_VS_PF3_TF2_CB4_NB4_XW1), &g_vertexInputLayout[C4JRender::VERTEX_TYPE_PF3_TF2_CB4_NB4_XW1]);
-    m_pDevice->CreateInputLayout(g_vertex_PTN_Elements_Compressed, 2, g_main_VS_Compressed, sizeof(g_main_VS_Compressed), &g_vertexInputLayout[C4JRender::VERTEX_TYPE_COMPRESSED]);
-    m_pDevice->CreateInputLayout(g_vertex_PTN_Elements_PF3_TF2_CB4_NB4_XW1, 5, g_main_VS_PF3_TF2_CB4_NB4_XW1_LIGHTING, sizeof(g_main_VS_PF3_TF2_CB4_NB4_XW1_LIGHTING), &g_vertexInputLayout[C4JRender::VERTEX_TYPE_PF3_TF2_CB4_NB4_XW1_LIT]);
-    m_pDevice->CreateInputLayout(g_vertex_PTN_Elements_PF3_TF2_CB4_NB4_XW1, 5, g_main_VS_PF3_TF2_CB4_NB4_XW1_TEXGEN, sizeof(g_main_VS_PF3_TF2_CB4_NB4_XW1_TEXGEN), &g_vertexInputLayout[C4JRender::VERTEX_TYPE_PF3_TF2_CB4_NB4_XW1_TEXGEN]);
+    m_pDevice->CreateInputLayout(g_vertex_PTN_Elements_PF3_TF2_CB4_NB4_XW1, 5, g_main_VS_PF3_TF2_CB4_NB4_XW1, sizeof(g_main_VS_PF3_TF2_CB4_NB4_XW1),
+                                 &g_vertexInputLayout[C4JRender::VERTEX_TYPE_PF3_TF2_CB4_NB4_XW1]);
+    m_pDevice->CreateInputLayout(g_vertex_PTN_Elements_Compressed, 2, g_main_VS_Compressed, sizeof(g_main_VS_Compressed),
+                                 &g_vertexInputLayout[C4JRender::VERTEX_TYPE_COMPRESSED]);
+    m_pDevice->CreateInputLayout(g_vertex_PTN_Elements_PF3_TF2_CB4_NB4_XW1, 5, g_main_VS_PF3_TF2_CB4_NB4_XW1_LIGHTING,
+                                 sizeof(g_main_VS_PF3_TF2_CB4_NB4_XW1_LIGHTING),
+                                 &g_vertexInputLayout[C4JRender::VERTEX_TYPE_PF3_TF2_CB4_NB4_XW1_LIT]);
+    m_pDevice->CreateInputLayout(g_vertex_PTN_Elements_PF3_TF2_CB4_NB4_XW1, 5, g_main_VS_PF3_TF2_CB4_NB4_XW1_TEXGEN,
+                                 sizeof(g_main_VS_PF3_TF2_CB4_NB4_XW1_TEXGEN),
+                                 &g_vertexInputLayout[C4JRender::VERTEX_TYPE_PF3_TF2_CB4_NB4_XW1_TEXGEN]);
 }
 
 void Renderer::StartFrame()
@@ -1002,5 +969,5 @@ void Renderer::UpdateGamma(unsigned short) {}
 
 Renderer::Context &Renderer::getContext()
 {
-    return *reinterpret_cast<Renderer::Context*>(TlsGetValue(Renderer::tlsIdx));
+    return *static_cast<Renderer::Context *>(TlsGetValue(Renderer::tlsIdx));
 }

@@ -49,11 +49,11 @@ public:
     class Context;
     class CommandBuffer;
 
-    //======================================================
-    // Matrix stack
-    //======================================================
-    #pragma region Matrix stack
-    public:
+//======================================================
+// Matrix stack
+//======================================================
+#pragma region Matrix stack
+public:
     void UpdateGamma(unsigned short usGamma);
     void MatrixMode(int type);
     void MatrixSetIdentity();
@@ -67,16 +67,15 @@ public:
     void MatrixMult(float *mat);
     const float *MatrixGet(int type);
     void Set_matrixDirty();
-
-    private:
+private:
     void MultWithStack(DirectX::XMMATRIX matrix);
-    #pragma endregion
+#pragma endregion
 
-    //======================================================
-    // Core
-    //======================================================
-    #pragma region Core
-    public:
+//======================================================
+// Core
+//======================================================
+#pragma region Core
+public:
     void Initialise(ID3D11Device *pDevice, IDXGISwapChain *pSwapChain);
     ID3D11DeviceContext *InitialiseContext(bool fromPresent);
     void StartFrame();
@@ -92,29 +91,30 @@ public:
     void EndConditionalSurvey();
     void BeginConditionalRendering(int identifier);
     void EndConditionalRendering();
-
-    private:
+private:
     void SetupShaders();
     Renderer::Context &getContext();
-    #pragma endregion
+#pragma endregion
 
-    //======================================================
-    // Vertex data handling
-    //======================================================
-    #pragma region Vertex data handling
-    public:
-    void DrawVertices(C4JRender::ePrimitiveType PrimitiveType, int count, void *dataIn, C4JRender::eVertexType vType, C4JRender::ePixelShaderType psType);
-    void DrawVertexBuffer(C4JRender::ePrimitiveType PrimitiveType, int count, ID3D11Buffer *buffer, C4JRender::eVertexType vType, C4JRender::ePixelShaderType psType);
+//======================================================
+// Vertex data handling
+//======================================================
+#pragma region Vertex data handling
+public:
+    void DrawVertices(C4JRender::ePrimitiveType PrimitiveType, int count, void *dataIn, C4JRender::eVertexType vType,
+                      C4JRender::ePixelShaderType psType);
+    void DrawVertexBuffer(C4JRender::ePrimitiveType PrimitiveType, int count, ID3D11Buffer *buffer, C4JRender::eVertexType vType,
+                          C4JRender::ePixelShaderType psType);
+private:
+    void DrawVertexSetup(C4JRender::eVertexType vType, C4JRender::ePixelShaderType psType, C4JRender::ePrimitiveType primitiveType, int *count,
+                         bool *drawIndexed);
+#pragma endregion
 
-    private:
-    void DrawVertexSetup(C4JRender::eVertexType vType, C4JRender::ePixelShaderType psType, C4JRender::ePrimitiveType primitiveType, int *count, bool *drawIndexed);
-    #pragma endregion
-
-    //======================================================
-    // Command buffers
-    //======================================================
-    #pragma region Command buffers
-    public:
+//======================================================
+// Command buffers
+//======================================================
+#pragma region Command buffers
+public:
     void CBuffLockStaticCreations();
     int CBuffCreate(int count);
     void CBuffDelete(int first, int count);
@@ -126,16 +126,15 @@ public:
     void CBuffTick();
     void CBuffDeferredModeStart();
     void CBuffDeferredModeEnd();
-
-    private:
+private:
     void DeleteInternalBuffer(int index);
-    #pragma endregion
+#pragma endregion
 
-    //======================================================
-    // Textures
-    //======================================================
-    #pragma region Textures
-    public:
+//======================================================
+// Textures
+//======================================================
+#pragma region Textures
+public:
     int TextureCreate();
     void TextureFree(int idx);
     void TextureBind(int idx);
@@ -153,16 +152,15 @@ public:
     HRESULT SaveTextureDataToMemory(void *pOutput, int outputCapacity, int *outputLength, int width, int height, int *ppDataIn);
     void TextureGetStats();
     ID3D11ShaderResourceView *TextureGetTexture(int idx);
-
-    private:
+private:
     void ConvertLinearToPng(ImageFileBuffer *pngOut, unsigned char *linearData, unsigned int width, unsigned int height);
-    #pragma endregion
+#pragma endregion
 
-    //======================================================
-    // State control
-    //======================================================
-    #pragma region State control
-    public:
+//======================================================
+// State control
+//======================================================
+#pragma region State control
+public:
     void StateSetColour(float r, float g, float b, float a);
     void StateSetDepthMask(bool enable);
     void StateSetBlendEnable(bool enable);
@@ -195,8 +193,7 @@ public:
     void StateSetStencil(D3D11_COMPARISON_FUNC function, uint8_t stencil_ref, uint8_t stencil_func_mask, uint8_t stencil_write_mask);
     void StateSetForceLOD(int LOD);
     void StateUpdate();
-
-    private:
+private:
     void UpdateTexGenState();
     void UpdateLightingState();
     void UpdateViewportState();
@@ -207,26 +204,25 @@ public:
     ID3D11BlendState *GetManagedBlendState();
     ID3D11RasterizerState *GetManagedRasterizerState();
     ID3D11SamplerState *GetManagedSamplerState();
-    #pragma endregion
+#pragma endregion
 
-    //======================================================
-    // Event tracking
-    //======================================================
-    #pragma region Event tracking
-    public:
+//======================================================
+// Event tracking
+//======================================================
+#pragma region Event tracking
+public:
     void BeginEvent(LPCWSTR eventName);
     void EndEvent();
-    #pragma endregion
+#pragma endregion
 
-    //======================================================
-    // PLM event handling
-    //======================================================
-    #pragma region PLM event handling
+//======================================================
+// PLM event handling
+//======================================================
+#pragma region PLM event handling
     void Suspend();
     bool Suspended();
     void Resume();
-    #pragma endregion
-
+#pragma endregion
 private:
     static int totalAlloc;
     static _RTL_CRITICAL_SECTION totalAllocCS;
@@ -234,7 +230,6 @@ private:
     static DWORD s_auiWidths[];
     static DWORD s_auiHeights[];
     static DXGI_FORMAT textureFormats[];
-
 public:
     static D3D_PRIMITIVE_TOPOLOGY m_Topologies[];
     static const float PI;
@@ -457,7 +452,7 @@ public:
         bool lightingEnabled;
         bool lightEnabled[2];
         bool lightingDirty;
-        DWORD forcedLOD;
+        int forcedLOD;
         DirectX::XMFLOAT4 lightDirection[2];
         DirectX::XMFLOAT4 lightColour[2];
         DirectX::XMFLOAT4 lightAmbientColour;
@@ -490,9 +485,9 @@ public:
 
         // Command buffer recording
         Renderer::CommandBuffer *commandBuffer;
-        DWORD recordingBufferIndex;
-        DWORD recordingVertexType;
-        DWORD recordingPrimitiveType;
+        int recordingBufferIndex;
+        int recordingVertexType;
+        int recordingPrimitiveType;
         bool deferredModeEnabled;
         std::vector<DeferredCBuff> deferredBuffers;
 
@@ -539,8 +534,8 @@ public:
     _RTL_CRITICAL_SECTION m_commandBufferCS;
 
     // Active shader state
-    DWORD activeVertexType;
-    DWORD activePixelType;
+    int activeVertexType;
+    int activePixelType;
     C4JRender::eViewportType m_ViewportType;
     BYTE reservedRendererByte0;
 
@@ -560,8 +555,8 @@ public:
     int *m_commandIndexToHandle;
     uint8_t *m_commandPrimitiveTypes;
     uint8_t *m_commandVertexTypes;
-    DWORD reservedRendererDword2;
-    DWORD reservedRendererDword3;
+    int reservedRendererDword2;
+    int reservedRendererDword3;
 
     // Managed D3D state cache
     std::unordered_map<int, ID3D11BlendState *> managedBlendStates;
