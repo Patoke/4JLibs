@@ -2,18 +2,26 @@
 
 A project that aims at rebuilding the 4J libraries source code via decompilation for the Minecraft: Legacy Console Edition
 
-## NOTICE
+## Known Bugs
 
 There's a bug in the main game code where the depth stencil view descriptor isn't zero initialized, this happens in the file ``Windows64_Minecraft.cpp`` at the 
 ```D3D11_DEPTH_STENCIL_VIEW_DESC descDSView;``` line
 
 
-This causes the depth stencil view creation to fail and consequently breaks the game, to fix this you will need to add the following line after the definition described:
+This causes the depth stencil view creation to fail and visually breaks the game, to fix this you will need to add the following line below the ``descDSView`` definition in ``Windows64_Minecraft.cpp``:
 
 ```ZeroMemory(&descDSView, sizeof(descDSView));```
 
 This issue only happens when building with newer versions of the Visual Studio compiler, Visual Studio 2012 isn't affected by this, so if you're working on a fork of the main source
 remember to add this line to avoid breaking the game for other people
+
+## Branches
+
+Currently there are two branches for the project: [master](https://github.com/Patoke/4JLibs/tree/master) and [legacy-4jlibs](https://github.com/Patoke/4JLibs/tree/legacy-4jlibs)
+
+The `master` branch is where we extend the `legacy-4jlibs` branch and implement new features or fixes that the original libraries may not have had.
+
+The `legacy-4jlibs` branch is where we aim to achieve a 1:1 decompilation using [objdiff](https://github.com/encounter/objdiff) for matching. Once that is achieved, the branch will be left as is.
 
 ## Why?
 
