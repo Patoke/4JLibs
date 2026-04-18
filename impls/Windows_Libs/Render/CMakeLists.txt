@@ -52,7 +52,8 @@ target_precompile_headers(${PROJECT_NAME} PRIVATE
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
 	PREFIX ""
-	OUTPUT_NAME "4J_Render"
+    # this suffix here should only exist for windows builds, as for other platforms it's just "4J_Render"
+	OUTPUT_NAME "4J_Render_PC"
     ARCHIVE_OUTPUT_DIRECTORY "${4JLibs_SOURCE_DIR}/libs"
 )
 
