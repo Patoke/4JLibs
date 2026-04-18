@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.25 FATAL_ERROR)
 
 project(4JLibs.Windows.Render LANGUAGES C CXX)
 
+include(shaders/build.cmake)
+
 set(LIBPNG_SOURCES
     vendor/libpng/png.c
     vendor/libpng/pngerror.c
@@ -31,6 +33,7 @@ add_library(${PROJECT_NAME} STATIC
     src/RendererTexture.cpp
     src/RendererVertex.cpp
     src/stdafx.cpp
+    ${GENERATED_SHADER_HEADERS}
 )
 
 target_link_libraries(${PROJECT_NAME} PUBLIC 
