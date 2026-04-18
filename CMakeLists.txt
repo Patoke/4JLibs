@@ -8,6 +8,8 @@ target_include_directories(4JLibs.Globals INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/inc
 )
 
+set(CMAKE_DEBUG_POSTFIX "_d")
+
 # msvc specific flags
 if(MSVC)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
