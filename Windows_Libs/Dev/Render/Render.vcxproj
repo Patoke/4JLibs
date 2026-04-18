@@ -49,7 +49,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -123,7 +123,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>libpng\;zlib\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>libpng\;zlib\;microprofile\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <IntrinsicFunctions>true</IntrinsicFunctions>
     </ClCompile>
@@ -133,6 +133,10 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib />
+    <PreBuildEvent>
+      <Command>cd shaders &amp;&amp; build.bat</Command>
+      <Message>Build Shaders</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -148,7 +152,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>libpng\;zlib\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>libpng\;zlib\;microprofile\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -156,6 +160,12 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib />
+    <PreBuildEvent>
+      <Command>cd shaders &amp;&amp; build.bat</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Build Shaders</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="4J_Render.h" />
@@ -167,6 +177,10 @@
     <ClInclude Include="libpng\pnglibconf.h" />
     <ClInclude Include="libpng\pngpriv.h" />
     <ClInclude Include="libpng\pngstruct.h" />
+    <ClInclude Include="microprofile\microprofile.h" />
+    <ClInclude Include="microprofile\microprofile_html.h" />
+    <ClInclude Include="microprofile\microprofile_icons.h" />
+    <ClInclude Include="Profiler.h" />
     <ClInclude Include="PS_ForceLOD.h" />
     <ClInclude Include="PS_ScreenClear.h" />
     <ClInclude Include="PS_ScreenSpace.h" />
@@ -175,8 +189,8 @@
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="VS_Compressed.h" />
     <ClInclude Include="VS_PF3_TF2_CB4_NB4_XW1.h" />
-    <ClInclude Include="VS_PF3_TF2_CB4_NB4_XW1_Lighting.h" />
-    <ClInclude Include="VS_PF3_TF2_CB4_NB4_XW1_Texgen.h" />
+    <ClInclude Include="VS_PF3_TF2_CB4_NB4_XW1_LIGHTING.h" />
+    <ClInclude Include="VS_PF3_TF2_CB4_NB4_XW1_TEXGEN.h" />
     <ClInclude Include="VS_ScreenClear.h" />
     <ClInclude Include="VS_ScreenSpace.h" />
     <ClInclude Include="zlib\zconf.h" />
@@ -329,6 +343,7 @@
       <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
       </ForcedIncludeFiles>
     </ClCompile>
+    <ClCompile Include="microprofile\microprofile.cpp" />
     <ClCompile Include="RendererCBuff.cpp" />
     <ClCompile Include="RendererCore.cpp" />
     <ClCompile Include="RendererMatrix.cpp" />
@@ -341,6 +356,20 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="shaders\main_PS.hlsl">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="shaders\main_VS.hlsl">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="shaders\screen_PS.hlsl">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="shaders\screen_VS.hlsl">
+      <FileType>Document</FileType>
+    </Text>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

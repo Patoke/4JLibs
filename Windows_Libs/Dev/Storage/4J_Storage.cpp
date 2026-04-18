@@ -1,4 +1,27 @@
-#pragma once
+/*
+MIT License
+
+Copyright (c) 2026 Patoke
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 #include "4J_Storage.h"
 #include "STO_Main.h"
 
@@ -26,6 +49,7 @@ C4JStorage::EMessageResult C4JStorage::GetMessageBoxResult()
 
 bool C4JStorage::SetSaveDevice(int (*Func)(LPVOID, const bool), LPVOID lpParam, bool bForceResetOfSaveDevice)
 {
+    // @Patoke: majorly used in XUI
     return true;
 }
 
@@ -42,6 +66,7 @@ void C4JStorage::ResetSaveData()
 
 void C4JStorage::SetDefaultSaveNameForKeyboardDisplay(LPCWSTR pwchDefaultSaveName)
 {
+    // @Patoke: unused for all platforms
     ;
 }
 
@@ -67,6 +92,7 @@ void C4JStorage::SetSaveUniqueFilename(char *szFilename)
 
 void C4JStorage::SetState(ESaveGameControlState eControlState, int (*Func)(LPVOID, const bool), LPVOID lpParam)
 {
+    // @Patoke: only used in the xbox 360 platform
     ;
 }
 
@@ -107,32 +133,38 @@ C4JStorage::ESaveGameState C4JStorage::SaveSaveData(int (*Func)(LPVOID, const bo
 
 void C4JStorage::CopySaveDataToNewSave(PBYTE pbThumbnail, DWORD cbThumbnail, WCHAR *wchNewName, int (*Func)(LPVOID lpParam, bool), LPVOID lpParam)
 {
+    // @Patoke: unused for other platforms that aren't the xbox 360
     ;
 }
 
 void C4JStorage::SetSaveDeviceSelected(unsigned int uiPad, bool bSelected)
 {
+    // @Patoke: majorly used in XUI
     ;
 }
 
 bool C4JStorage::GetSaveDeviceSelected(unsigned int iPad)
 {
+    // @Patoke: majorly used in XUI
     return true;
 }
 
 C4JStorage::ESaveGameState C4JStorage::DoesSaveExist(bool *pbExists)
 {
+    // @Patoke: implementation is stubbed out in other platforms too
     *pbExists = true;
     return ESaveGame_Idle;
 }
 
 bool C4JStorage::EnoughSpaceForAMinSaveGame()
 {
+    // @Patoke: implementation is stubbed out in other platforms too
     return true;
 }
 
 void C4JStorage::SetSaveMessageVPosition(float fY)
 {
+    // @Patoke: completely unused
     ;
 }
 
@@ -160,11 +192,13 @@ C4JStorage::ESaveGameState C4JStorage::LoadSaveDataThumbnail(PSAVE_INFO pSaveInf
 
 void C4JStorage::GetSaveCacheFileInfo(DWORD dwFile, XCONTENT_DATA &xContentData)
 {
+    // @Patoke: xbox 360 leftover
     ;
 }
 
 void C4JStorage::GetSaveCacheFileInfo(DWORD dwFile, PBYTE *ppbImageData, DWORD *pdwImageBytes)
 {
+    // @Patoke: xbox 360 leftover
     ;
 }
 
@@ -180,6 +214,7 @@ C4JStorage::ESaveGameState C4JStorage::DeleteSaveData(PSAVE_INFO pSaveInfo, int 
 
 void C4JStorage::RegisterMarketplaceCountsCallback(int (*Func)(LPVOID lpParam, C4JStorage::DLC_TMS_DETAILS *, int), LPVOID lpParam)
 {
+    // @Patoke: only used in the xbox 360 platform
     ;
 }
 

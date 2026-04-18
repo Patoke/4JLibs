@@ -2,6 +2,10 @@
 
 A project that aims at rebuilding the 4J libraries source code via decompilation for the Minecraft: Legacy Console Edition
 
+## Implementation
+
+For implementation details, please look at the [IMPLEMENTATION_GUIDE.md](IMPLEMENTATION_GUIDE.md) file
+
 ## Why?
 
 This would allow compiling the Minecraft: Legacy Console Edition source code from newer versions of Visual Studio, expand the Renderer code, add new Input support, etc...

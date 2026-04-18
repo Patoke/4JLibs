@@ -1,5 +1,30 @@
 #pragma once
+/*
+MIT License
+
+Copyright (c) 2026 Patoke
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 #include "4J_Render.h"
+#include "Profiler.h"
 #include <cstdint>
 #include <unordered_map>
 #include <vector>
@@ -10,9 +35,16 @@
 #define MATRIX_MODE_MODELVIEW_CBUFF      3
 #define MATRIX_MODE_MODELVIEW_MAX        4
 
-#define STACK_TYPES    4
-#define STACK_SIZE     16
-#define MAX_MIP_LEVELS 5
+#define STACK_TYPES  4
+#define STACK_SIZE   16
+#define MAX_TEXTURES 512
+
+#define NUM_THUMBNAIL_DOWNSAMPLES      4 // the amount of downsamples we do to the thumbnail texture
+#define THUMBNAIL_MAX_QUALITY          0 // 1920x1080
+#define THUMBNAIL_DOWNSAMPLE_QUALITY_1 1 // 512x512
+#define THUMBNAIL_DOWNSAMPLE_QUALITY_2 2 // 256x256
+#define THUMBNAIL_DOWNSAMPLE_QUALITY_3 3 // 128x128
+#define THUMBNAIL_DOWNSAMPLE_TARGET    4 // 64x64
 
 #define NUM_COMMAND_HANDLES 0x800000
 #define MAX_COMMAND_BUFFERS 16000
@@ -137,9 +169,16 @@ private:
     ID3D11SamplerState *GetManagedSamplerState();
     void DeleteInternalBuffer(int index);
     Renderer::Context &getContext();
-    static D3D11_PRIMITIVE_TOPOLOGY *m_Topologies;
-    static DXGI_FORMAT textureFormats[C4JRender::MAX_TEXTURE_FORMATS];
 public:
+
+    enum eTextureSamplerFlags
+    {
+        SAMPLER_PARAM_CLAMP_U = 1 << 0,
+        SAMPLER_PARAM_CLAMP_V = 1 << 1,
+        SAMPLER_PARAM_LINEAR_FILTER = 1 << 2,
+        SAMPLER_PARAM_LINEAR_MIPS = 1 << 3,
+    };
+
     struct Texture
     {
         bool allocated;
@@ -326,18 +365,18 @@ public:
 
         ID3D11DeviceContext *m_pDeviceContext;
         ID3DUserDefinedAnnotation *userAnnotation;
-        DWORD annotateDepth;
+        int annotateDepth;
         DirectX::XMMATRIX matrixStacks[MATRIX_MODE_MODELVIEW_MAX][STACK_SIZE];
         bool matrixDirty[MATRIX_MODE_MODELVIEW_MAX];
         DWORD stackPos[MATRIX_MODE_MODELVIEW_MAX];
         DWORD stackType;
         DWORD textureIdx;
-        BYTE faceCullEnabled;
-        BYTE depthTestEnabled;
-        BYTE alphaTestEnabled;
+        bool faceCullEnabled;
+        bool depthTestEnabled;
+        bool alphaTestEnabled;
         float alphaReference;
-        BYTE depthWriteEnabled;
-        BYTE fogEnabled;
+        bool depthWriteEnabled;
+        bool fogEnabled;
         float fogNearDistance;
         float fogFarDistance;
         float fogDensity;
@@ -345,9 +384,9 @@ public:
         float fogColourBlue;
         float fogColourGreen;
         DWORD fogMode;
-        BYTE lightingEnabled;
-        BYTE lightEnabled[2];
-        BYTE lightingDirty;
+        bool lightingEnabled;
+        bool lightEnabled[2];
+        bool lightingDirty;
         DWORD forcedLOD;
         BYTE paddingAfterForceLOD[4];
         DirectX::XMFLOAT4 lightDirection[2];
@@ -377,7 +416,7 @@ public:
         DWORD recordingBufferIndex;
         DWORD recordingVertexType;
         DWORD recordingPrimitiveType;
-        BYTE deferredModeEnabled;
+        bool deferredModeEnabled;
         std::vector<DeferredCBuff> deferredBuffers;
         D3D11_BLEND_DESC blendDesc;
         D3D11_DEPTH_STENCIL_DESC depthStencilDesc;
@@ -386,23 +425,23 @@ public:
     };
 
     static DWORD tlsIdx;
-    static unsigned int s_auiWidths[MAX_MIP_LEVELS + 1];
-    static unsigned int s_auiHeights[MAX_MIP_LEVELS + 1];
-    static D3D11_INPUT_ELEMENT_DESC g_vertex_PTN_Elements_PF3_TF2_CB4_NB4_XW1[5];
-    static D3D11_INPUT_ELEMENT_DESC g_vertex_PTN_Elements_Compressed[2];
-    static D3D11_PRIMITIVE_TOPOLOGY g_topologies[C4JRender::PRIMITIVE_TYPE_COUNT];
-    static int totalAlloc;
     static _RTL_CRITICAL_SECTION totalAllocCS;
+    static DWORD s_auiWidths[];
+    static DWORD s_auiHeights[];
+    static DXGI_FORMAT textureFormats[];
+    static D3D_PRIMITIVE_TOPOLOGY g_topologies[];
+    static int totalAlloc;
+    static const float PI;
 
     float m_fClearColor[4];
     ID3D11Device *m_pDevice;
     ID3D11DeviceContext *m_pDeviceContext;
     IDXGISwapChain *m_pSwapChain;
-    ID3D11RenderTargetView *renderTargetView;
-    ID3D11RenderTargetView *renderTargetViews[4];
-    ID3D11ShaderResourceView *renderTargetShaderResourceView;
-    ID3D11ShaderResourceView *renderTargetShaderResourceViews[4];
-    ID3D11Texture2D *renderTargetTextures[4];
+    ID3D11RenderTargetView *mainRenderTargetView;
+    ID3D11RenderTargetView *downSampleRenderTargetViews[NUM_THUMBNAIL_DOWNSAMPLES];
+    ID3D11ShaderResourceView *mainShaderResourceView;
+    ID3D11ShaderResourceView *downSampleShaderResourceViews[NUM_THUMBNAIL_DOWNSAMPLES];
+    ID3D11Texture2D *downSampleTextures[NUM_THUMBNAIL_DOWNSAMPLES];
     ID3D11DepthStencilView *depthStencilView;
     ID3D11VertexShader **vertexShaderTable;
     ID3D11VertexShader *screenSpaceVertexShader;
@@ -420,7 +459,7 @@ public:
     DWORD presentCount;
     BYTE rendererFlag0;
     BYTE paddingAfterRendererFlag0[3];
-    _RTL_CRITICAL_SECTION rtl_critical_section100;
+    _RTL_CRITICAL_SECTION m_commandBufferCS;
     DWORD activeVertexType;
     DWORD activePixelType;
     C4JRender::eViewportType m_ViewportType;
@@ -432,21 +471,23 @@ public:
     BYTE reservedRendererByte1;
     BYTE paddingAfterRendererByte1[3];
     DWORD reservedRendererDword1;
-    int16_t *m_commandHandleToIndex;
+    int16_t *m_vertexIdxToBufferIdx;
     CommandBuffer **m_commandBuffers;
-    uint8_t *m_commandPrimitiveTypes;
     DirectX::XMMATRIX *m_commandMatrices;
-    int *m_commandIndexToHandle;
+    int *m_bufferIdxToVertexIdx;
+    uint8_t *m_commandPrimitiveTypes;
     uint8_t *m_commandVertexTypes;
-    DWORD reservedRendererDword2;
-    DWORD reservedRendererDword3;
+    DWORD m_currentCommandBuffer;
+    DWORD m_numBuffersToDeallocate;
     std::unordered_map<int, ID3D11BlendState *> managedBlendStates;
     std::unordered_map<int, ID3D11DepthStencilState *> managedDepthStencilStates;
     std::unordered_map<int, ID3D11SamplerState *> managedSamplerStates;
     std::unordered_map<int, ID3D11RasterizerState *> managedRasterizerStates;
-    BYTE shouldScreenGrabNextFrame;
-    BYTE suspended;
-    BYTE paddingAfterSuspendState[2];
+    bool m_bShouldScreenGrabNextFrame;
+    bool m_bSuspended;
+    
+    // @Patoke add
+    ID3D11Texture2D *m_backBufferTexture;
 };
 
 // Singleton
