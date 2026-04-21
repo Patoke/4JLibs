@@ -427,16 +427,9 @@ FodyWeavers.xsd
 *.msm
 *.msp
 
-# special headers
-4J_Input.h
-4J_Storage.h
-4J_Render.h
-4J_Profile.h
-
-extraX64.h
-
 .vscode/
 build/
+libs/
 
 # generated shader headers
 VS_PF3_TF2_CB4_NB4_XW1.h

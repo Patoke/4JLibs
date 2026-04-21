@@ -1,3 +1,4 @@
+:: legacy shader building code
 @echo off
 
 set OUT=../
