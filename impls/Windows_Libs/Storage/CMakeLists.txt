@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.25 FATAL_ERROR)
 
-project(4JLibs.Windows.Storage LANGUAGES C CXX)
+project(4JLibs.Windows64.Storage LANGUAGES C CXX)
 
 add_library(${PROJECT_NAME} STATIC
     src/4J_Storage.cpp

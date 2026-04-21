@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.25 FATAL_ERROR)
 
-project(4JLibs.Windows.Render LANGUAGES C CXX)
+project(4JLibs.Windows64.Render LANGUAGES C CXX)
 
 include(shaders/build.cmake)
 

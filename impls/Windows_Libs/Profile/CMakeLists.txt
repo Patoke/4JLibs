@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.25 FATAL_ERROR)
 
-project(4JLibs.Windows.Profile LANGUAGES CXX)
+project(4JLibs.Windows64.Profile LANGUAGES CXX)
 
 add_library(${PROJECT_NAME} STATIC
     src/4J_Profile.cpp
