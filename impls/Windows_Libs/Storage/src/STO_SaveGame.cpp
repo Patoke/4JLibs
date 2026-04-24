@@ -461,7 +461,7 @@ void CSaveGame::AddTextFieldToPNG(PBYTE pbImageData, DWORD dwImageBytes, PBYTE p
 
     for (int j = 0; j < 8; ++j)
     {
-        if (CSaveGame::szPNGHeader[j] != pbImageData[j])
+        if (CSaveGame::szPNGHeader[j] != reinterpret_cast<char*>(pbImageData)[j])
         {
             return;
         }
